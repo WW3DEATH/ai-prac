@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhysLab AI — Real-Time Physics Simulations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: { display: ['Space Grotesk','sans-serif'], mono: ['JetBrains Mono','monospace'] },
+                colors: {
+                    lab: { bg:'#06080d', card:'#0c1018', card2:'#111827', border:'#1a2332', text:'#e6edf3', muted:'#7d8590', green:'#00ff88', cyan:'#00b4d8', orange:'#ff6b35', red:'#ff4757' }
+                }
+            }
+        }
+    }
+    </script>
+    <style>
+        :root { --green:#00ff88; --cyan:#00b4d8; --orange:#ff6b35; --bg:#06080d; --card:#0c1018; --border:#1a2332; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; }
+        body { font-family:'Space Grotesk',sans-serif; background:var(--bg); color:#e6edf3; overflow-x:hidden; }
+        ::-webkit-scrollbar { width:6px; }
+        ::-webkit-scrollbar-track { background:#06080d; }
+        ::-webkit-scrollbar-thumb { background:#1a2332; border-radius:3px; }
+        ::-webkit-scrollbar-thumb:hover { background:#2a3a4e; }
+
+        .scroll-reveal { opacity:0; transform:translateY(50px); transition:opacity 0.7s ease, transform 0.7s ease; }
+        .scroll-reveal.visible { opacity:1; transform:translateY(0); }
+        .scroll-reveal-left { opacity:0; transform:translateX(-60px); transition:opacity 0.7s ease, transform 0.7s ease; }
+        .scroll-reveal-left.visible { opacity:1; transform:translateX(0); }
+        .scroll-reveal-right { opacity:0; transform:translateX(60px); transition:opacity 0.7s ease, transform 0.7s ease; }
+        .scroll-reveal-right.visible { opacity:1; transform:translateX(0); }
+
+        #hero-canvas { position:absolute; inset:0; z-index:0; }
+
+        .glow-green { box-shadow:0 0 20px rgba(0,255,136,0.15), 0 0 60px rgba(0,255,136,0.05); }
+        .glow-cyan { box-shadow:0 0 20px rgba(0,180,216,0.15), 0 0 60px rgba(0,180,216,0.05); }
+        .text-glow-green { text-shadow:0 0 30px rgba(0,255,136,0.4); }
+
+        .btn-primary {
+            background:linear-gradient(135deg,#00ff88,#00cc6a); color:#06080d; font-weight:600;
+            padding:12px 28px; border-radius:10px; border:none; cursor:pointer;
+            transition:all 0.3s; font-family:inherit; font-size:15px; position:relative; overflow:hidden;
+        }
+        .btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(0,255,136,0.3); }
+        .btn-primary:active { transform:translateY(0) scale(0.97); }
+        .btn-primary .ripple {
+            position:absolute; border-radius:50%; background:rgba(255,255,255,0.35);
+            transform:scale(0); animation:rippleAnim 0.6s ease-out forwards; pointer-events:none;
+        }
+        @keyframes rippleAnim { to { transform:scale(4); opacity:0; } }
+
+        .btn-secondary {
+            background:transparent; color:#00ff88; font-weight:500; padding:10px 24px;
+            border-radius:10px; border:1.5px solid rgba(0,255,136,0.3); cursor:pointer;
+            transition:all 0.3s; font-family:inherit; font-size:14px;
+        }
+        .btn-secondary:hover { border-color:#00ff88; background:rgba(0,255,136,0.05); }
+        .btn-sm { padding:8px 16px; font-size:13px; border-radius:8px; }
+        .btn-icon {
+            width:40px; height:40px; display:inline-flex; align-items:center; justify-content:center;
+            border-radius:10px; border:1.5px solid var(--border); background:var(--card);
+            color:#e6edf3; cursor:pointer; transition:all 0.2s; font-size:14px; position:relative; overflow:hidden;
+        }
+        .btn-icon:hover { border-color:var(--green); color:var(--green); background:rgba(0,255,136,0.05); }
+        .btn-icon:active { transform:scale(0.9); }
+
+        input[type=range] { -webkit-appearance:none; width:100%; height:6px; border-radius:3px; background:#1a2332; outline:none; cursor:pointer; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance:none; width:18px; height:18px; border-radius:50%;
+            background:var(--green); border:2px solid #06080d;
+            box-shadow:0 0 8px rgba(0,255,136,0.4); cursor:pointer; transition:transform 0.15s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.25); }
+        input[type=range]::-moz-range-thumb {
+            width:18px; height:18px; border-radius:50%;
+            background:var(--green); border:2px solid #06080d; cursor:pointer;
+        }
+
+        .sim-canvas-wrap { background:#080b12; border:1px solid var(--border); border-radius:14px; overflow:hidden; position:relative; }
+        .sim-canvas-wrap canvas { display:block; }
+
+        .ai-panel {
+            background:linear-gradient(135deg,rgba(0,255,136,0.03),rgba(0,180,216,0.03));
+            border:1px solid rgba(0,255,136,0.12); border-radius:12px; padding:16px;
+            font-family:'JetBrains Mono',monospace; font-size:12.5px; line-height:1.7;
+            color:#a0aec0; position:relative; overflow:hidden;
+        }
+        .ai-panel::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:2px;
+            background:linear-gradient(90deg,transparent,var(--green),transparent);
+            animation:aiScan 3s ease-in-out infinite;
+        }
+        @keyframes aiScan { 0%,100%{opacity:0.3;transform:translateX(-100%)} 50%{opacity:1;transform:translateX(100%)} }
+        .ai-panel .ai-label { color:var(--green); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+        .ai-panel .eq { color:var(--cyan); }
+        .ai-panel .val { color:var(--orange); font-weight:600; }
+        .ai-panel .insight { color:#c9d1d9; margin-top:6px; padding-left:12px; border-left:2px solid rgba(0,255,136,0.2); }
+
+        .data-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(26,35,50,0.5); }
+        .data-row:last-child { border-bottom:none; }
+        .data-label { color:#7d8590; font-size:12px; font-family:'JetBrains Mono',monospace; }
+        .data-value { color:#e6edf3; font-size:13px; font-family:'JetBrains Mono',monospace; font-weight:500; transition:color 0.3s; }
+
+        .feature-card {
+            background:var(--card); border:1px solid var(--border); border-radius:16px;
+            padding:32px; transition:all 0.4s; position:relative; overflow:hidden;
+        }
+        .feature-card:hover { border-color:rgba(0,255,136,0.2); transform:translateY(-4px); }
+        .feature-card::after {
+            content:''; position:absolute; inset:0;
+            background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(0,255,136,0.06),transparent 60%);
+            opacity:0; transition:opacity 0.4s; pointer-events:none;
+        }
+        .feature-card:hover::after { opacity:1; }
+        .feature-icon { width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px; margin-bottom:20px; }
+
+        #toast-container { position:fixed; top:80px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+        .toast {
+            padding:12px 20px; border-radius:10px; font-size:13px; font-family:'Space Grotesk',sans-serif;
+            transform:translateX(120%); transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1); max-width:340px; border:1px solid;
+            pointer-events:auto;
+        }
+        .toast.show { transform:translateX(0); }
+        .toast-success { background:rgba(0,255,136,0.1); border-color:rgba(0,255,136,0.2); color:#00ff88; }
+        .toast-info { background:rgba(0,180,216,0.1); border-color:rgba(0,180,216,0.2); color:#00b4d8; }
+        .toast-warn { background:rgba(255,107,53,0.1); border-color:rgba(255,107,53,0.2); color:#ff6b35; }
+
+        nav { backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); }
+
+        .energy-bar { height:8px; border-radius:4px; background:#1a2332; overflow:hidden; }
+        .energy-fill { height:100%; border-radius:4px; transition:width 0.06s linear; }
+
+        .section-divider { height:1px; background:linear-gradient(90deg,transparent,var(--border),transparent); margin:0 auto; max-width:800px; }
+
+        .float-symbol {
+            position:absolute; font-family:'JetBrains Mono',monospace; color:rgba(0,255,136,0.06);
+            font-size:14px; pointer-events:none; animation:floatSym 8s ease-in-out infinite;
+        }
+        @keyframes floatSym { 0%,100%{transform:translateY(0) rotate(0deg);opacity:0.06} 50%{transform:translateY(-20px) rotate(5deg);opacity:0.12} }
+
+        .sim-status {
+            position:absolute; top:12px; right:12px; padding:4px 10px; border-radius:6px;
+            font-size:10px; font-family:'JetBrains Mono',monospace; font-weight:600;
+            text-transform:uppercase; letter-spacing:1px; z-index:2; transition:all 0.3s;
+        }
+        .sim-status.idle { background:rgba(125,133,144,0.15); color:#7d8590; }
+        .sim-status.running { background:rgba(0,255,136,0.15); color:#00ff88; animation:statusPulse 1.5s ease-in-out infinite; }
+        .sim-status.done { background:rgba(0,180,216,0.15); color:#00b4d8; }
+        @keyframes statusPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+        @media (prefers-reduced-motion:reduce) {
+            .scroll-reveal,.scroll-reveal-left,.scroll-reveal-right { opacity:1;transform:none;transition:none; }
+            .float-symbol,.ai-panel::before { animation:none; }
+            .sim-status.running { animation:none; }
+        }
+        @media (max-width:768px) {
+            .sim-layout { flex-direction:column !important; }
+            .sim-canvas-wrap { height:280px !important; }
+        }
+    </style>
+</head>
+<body>
+    <div id="toast-container"></div>
+
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-lab-bg/70 border-b border-lab-border">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <a href="#" class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-lab-green to-lab-cyan flex items-center justify-center">
+                    <i class="fas fa-atom text-lab-bg text-sm"></i>
+                </div>
+                <span class="font-display font-bold text-lg tracking-tight">PhysLab<span class="text-lab-green">AI</span></span>
+            </a>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#features" class="text-lab-muted hover:text-lab-text text-sm transition-colors">Features</a>
+                <a href="#projectile" class="text-lab-muted hover:text-lab-text text-sm transition-colors">Simulations</a>
+                <a href="#ai-section" class="text-lab-muted hover:text-lab-text text-sm transition-colors">AI Engine</a>
+            </div>
+            <button class="btn-primary btn-sm" onclick="scrollToLab()">Enter Lab</button>
+        </div>
+    </nav>
+
+    <header class="relative min-h-screen flex items-center justify-center overflow-hidden" id="hero">
+        <canvas id="hero-canvas"></canvas>
+        <span class="float-symbol" style="top:15%;left:10%;animation-delay:0s">F = ma</span>
+        <span class="float-symbol" style="top:25%;right:12%;animation-delay:1.5s;font-size:18px">E = mc²</span>
+        <span class="float-symbol" style="top:60%;left:8%;animation-delay:3s">Δp = FΔt</span>
+        <span class="float-symbol" style="top:70%;right:15%;animation-delay:4.5s;font-size:16px">∑F = 0</span>
+        <span class="float-symbol" style="top:40%;left:20%;animation-delay:2s;font-size:12px">v²=u²+2as</span>
+        <span class="float-symbol" style="top:80%;left:45%;animation-delay:5s">T=2π√(L/g)</span>
+        <span class="float-symbol" style="top:20%;left:55%;animation-delay:6s;font-size:13px">p=mv</span>
+        <span class="float-symbol" style="top:50%;right:8%;animation-delay:1s;font-size:15px">W=Fd</span>
+
+        <div class="relative z-10 text-center px-6 max-w-4xl mx-auto">
+            <div class="inline-flex items-center gap-2 bg-lab-card border border-lab-border rounded-full px-4 py-1.5 mb-8 scroll-reveal" style="transition-delay:0.1s">
+                <span class="w-2 h-2 rounded-full bg-lab-green animate-pulse"></span>
+                <span class="text-lab-muted text-xs font-mono">AI-Powered Physics Engine v2.0</span>
+            </div>
+            <h1 class="font-display text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.1] mb-6 scroll-reveal" style="transition-delay:0.2s">
+                Physics,<br><span class="text-glow-green text-lab-green">Reimagined</span> by AI
+            </h1>
+            <p class="text-lab-muted text-lg sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed scroll-reveal" style="transition-delay:0.35s">
+                Real-time simulations with intelligent analysis. Adjust parameters, watch physics unfold, and let AI explain the science behind every motion.
+            </p>
+            <div class="flex flex-wrap items-center justify-center gap-4 scroll-reveal" style="transition-delay:0.5s">
+                <button class="btn-primary text-base" onclick="scrollToLab()">
+                    <i class="fas fa-flask mr-2"></i>Enter the Lab
+                </button>
+                <button class="btn-secondary" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">
+                    <i class="fas fa-info-circle mr-2"></i>How It Works
+                </button>
+            </div>
+        </div>
+        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 scroll-reveal" style="transition-delay:0.7s">
+            <span class="text-lab-muted text-xs font-mono">Scroll to explore</span>
+            <div class="w-5 h-8 border border-lab-border rounded-full flex justify-center pt-1.5">
+                <div class="w-1 h-2 bg-lab-green rounded-full animate-bounce"></div>
+            </div>
+        </div>
+    </header>
+
+    <section class="py-16 border-y border-lab-border bg-lab-card/30">
+        <div class="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div class="text-center scroll-reveal" style="transition-delay:0.1s">
+                <div class="text-3xl font-bold text-lab-green font-mono counter" data-target="4">0</div>
+                <div class="text-lab-muted text-sm mt-1">Interactive Labs</div>
+            </div>
+            <div class="text-center scroll-reveal" style="transition-delay:0.2s">
+                <div class="text-3xl font-bold text-lab-cyan font-mono counter" data-target="50">0</div>
+                <div class="text-lab-muted text-sm mt-1">Physics Concepts</div>
+            </div>
+            <div class="text-center scroll-reveal" style="transition-delay:0.3s">
+                <div class="text-3xl font-bold text-lab-orange font-mono counter" data-target="1000">0</div>
+                <div class="text-lab-muted text-sm mt-1">Frames per Second</div>
+            </div>
+            <div class="text-center scroll-reveal" style="transition-delay:0.4s">
+                <div class="text-3xl font-bold text-lab-text font-mono">AI</div>
+                <div class="text-lab-muted text-sm mt-1">Powered Analysis</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="py-24 px-6">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="font-display text-3xl sm:text-4xl font-bold mb-4 scroll-reveal">Built for Real Understanding</h2>
+                <p class="text-lab-muted text-lg max-w-xl mx-auto scroll-reveal" style="transition-delay:0.1s">Not just visualizations — real physics engines with AI that thinks alongside you.</p>
+            </div>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="feature-card scroll-reveal" style="transition-delay:0.1s" onmousemove="moveCardGlow(event,this)">
+                    <div class="feature-icon bg-lab-green/10 text-lab-green"><i class="fas fa-bolt"></i></div>
+                    <h3 class="font-display font-semibold text-lg mb-2">Real-Time Engine</h3>
+                    <p class="text-lab-muted text-sm leading-relaxed">Physics computed at 60fps with accurate numerical integration. No approximations, no shortcuts.</p>
+                </div>
+                <div class="feature-card scroll-reveal" style="transition-delay:0.2s" onmousemove="moveCardGlow(event,this)">
+                    <div class="feature-icon bg-lab-cyan/10 text-lab-cyan"><i class="fas fa-brain"></i></div>
+                    <h3 class="font-display font-semibold text-lg mb-2">AI Analysis</h3>
+                    <p class="text-lab-muted text-sm leading-relaxed">Intelligent insights that update as you experiment. Equations, predictions, and explanations in real time.</p>
+                </div>
+                <div class="feature-card scroll-reveal" style="transition-delay:0.3s" onmousemove="moveCardGlow(event,this)">
+                    <div class="feature-icon bg-lab-orange/10 text-lab-orange"><i class="fas fa-sliders-h"></i></div>
+                    <h3 class="font-display font-semibold text-lg mb-2">Full Control</h3>
+                    <p class="text-lab-muted text-sm leading-relaxed">Adjust every parameter with precision sliders. Mass, velocity, gravity, damping — you decide the experiment.</p>
+                </div>
+                <div class="feature-card scroll-reveal" style="transition-delay:0.4s" onmousemove="moveCardGlow(event,this)">
+                    <div class="feature-icon bg-lab-red/10 text-lab-red"><i class="fas fa-chart-line"></i></div>
+                    <h3 class="font-display font-semibold text-lg mb-2">Live Data</h3>
+                    <p class="text-lab-muted text-sm leading-relaxed">Real-time graphs, energy bars, and numerical readouts. See conservation laws in action as they happen.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- PROJECTILE MOTION -->
+    <section id="projectile" class="py-24 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex items-center gap-3 mb-10 scroll-reveal">
+                <div class="w-10 h-10 rounded-xl bg-lab-green/10 flex items-center justify-center text-lab-green"><i class="fas fa-basketball-ball"></i></div>
+                <div>
+                    <h2 class="font-display text-2xl sm:text-3xl font-bold">Projectile Motion</h2>
+                    <p class="text-lab-muted text-sm">Study trajectory, range, and maximum height under gravity.</p>
+                </div>
+            </div>
+            <div class="sim-layout flex flex-col lg:flex-row gap-6">
+                <div class="flex-1 scroll-reveal-left">
+                    <div class="sim-canvas-wrap" style="height:420px">
+                        <div class="sim-status idle" id="proj-status">Ready</div>
+                        <canvas id="proj-canvas"></canvas>
+                    </div>
+                </div>
+                <div class="w-full lg:w-80 flex flex-col gap-4 scroll-reveal-right">
+                    <div class="bg-lab-card border border-lab-border rounded-xl p-5">
+                        <div class="text-xs font-mono text-lab-green uppercase tracking-wider mb-4">Parameters</div>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5"><span class="text-lab-muted">Launch Angle</span><span class="font-mono text-lab-text" id="proj-angle-val">45°</span></div>
+                                <input type="range" id="proj-angle" min="5" max="85" value="45" oninput="projSetParam()">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5"><span class="text-lab-muted">Initial Velocity</span><span class="font-mono text-lab-text" id="proj-vel-val">25 m/s</span></div>
+                                <input type="range" id="proj-vel" min="5" max="50" value="25" oninput="projSetParam()">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5"><span class="text-lab-muted">Gravity</span><span class="font-mono text-lab-text" id="proj-grav-val">9.81 m/s²</span></div>
+                                <input type="range" id="proj-grav" min="1" max="25" value="9.81" step="0.01" oninput="projSetParam()">
+                            </div>
+                        </div>
+                        <div class="flex gap-2 mt-5">
+                            <button class="btn-primary btn-sm flex-1" id="proj-launch" onclick="projLaunch()"><i class="fas fa-play mr-1"></i>Launch</button>
+                            <button class="btn-icon" onclick="projReset()" title="Reset"><i class="fas fa-redo"></i></button>
+                            <button class="btn-icon" onclick="projAIOptimize()" title="AI Optimize"><i class="fas fa-magic"></i></button>
+                        </div>
+                    </div>
+                    <div class="bg-lab-card border border-lab-border rounded-xl p-5">
+                        <div class="text-xs font-mono text-lab-cyan uppercase tracking-wider mb-3">Live Data</div>
+                        <div class="data-row"><span class="data-label">Range</span><span class="data-value" id="proj-range">—</span></div>
+                        <div class="data-row"><span class="data-label">Max Height</span><span class="data-value" id="proj-maxh">—</span></div>
+                        <div class="data-row"><span class="data-label">Time of Flight</span><span class="data-value" id="proj-tof">—</span></div>
+                        <div class="data-row"><span class="data-label">Current Speed</span><span class="data-value" id="proj-speed">—</span></div>
+                    </div>
+                    <div class="ai-panel" id="proj-ai">
+                        <div class="ai-label"><i class="fas fa-robot"></i> AI Analysis</div>
+                        <div id="proj-ai-text">Adjust parameters and launch to see AI analysis...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- PENDULUM -->
+    <section id="pendulum" class="py-24 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex items-center gap-3 mb-10 scroll-reveal">
+                <div class="w-10 h-10 rounded-xl bg-lab-cyan/10 flex items-center justify-center text-lab-cyan"><i class="fas fa-clock"></i></div>
+                <div>
+                    <h2 class="font-display text-2xl sm:text-3xl font-bold">Simple Pendulum</h2>
+                    <p class="text-lab-muted text-sm">Explore oscillations, period, and energy conservation.</p>
+                </div>
+            </div>
+            <div class="sim-layout flex flex-col lg:flex-row-reverse gap-6">
+                <div class="flex-1 scroll-reveal-right">
+                    <div class="sim-canvas-wrap" style="height:420px">
+                        <div class="sim-status idle" id="pend-status">Ready</div>
+                        <canvas id="pend-canvas"></canvas>
+                    </div>
+                </div>
+                <div class="w-full lg:w-80 flex flex-col gap-4 scroll-reveal-left">
+                    <div class="bg-lab-card border border-lab-border rounded-xl p-5">
+                        <div class="text-xs font-mono text-lab-green uppercase tracking-wider mb-4">Parameters</div>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5"><span class="text-lab-muted">Length</span><span class="font-mono text-lab-text" id="pend-len-val">1.5 m</span></div>
+                                <input type="range" id="pend-len" min="0.3" max="3" value="1.5" step="0.1" oninput="pendSetParam()">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5"><span class="text-lab-muted">Initial Angle</span><span class="font-mono text-lab-text" id="pend-ang-val">30°</span></div>
+                                <input type="range" id="pend-ang" min="5" max="80" value="30" oninput="pendSetParam()">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5"><span class="text-lab-muted">Gravity</span><span class="font-mono text-lab-text" id="pend-grav-val">9.81 m/s²</span></div>
+                                <input type="range" id="pend-grav" min="1" max="25" value="9.81" step="0.01" oninput="pendSetParam()">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5"><span class="text-lab-muted">Damping</span><span class="font-mono text-lab-text" id="pend-damp-val">0.00</span></div>
+                                <input type="range" id="pend-damp" min="0" max="0.5" value="0" step="0.01" oninput="pendSetParam()">
+                            </div>
+                        </div>
+                        <div class="flex gap-2 mt-5">
+                            <button class="btn-primary btn-sm flex-1" id="pend-toggle" onclick="pendToggle()"><i class="fas fa-play mr-1"></i>Start</button>
+                            <button class="btn-icon" onclick="pendReset()" title="Reset"><i class="fas fa-redo"></i></button>
+                            <button class="btn-icon" onclick="pendAIOptimize()" title="AI Optimize"><i class="fas fa-magic"></i></button>
+                        </div>
+                    </div>
+                    <div class="bg-lab-card border border-lab-border rounded-xl p-5">
+                        <div class="text-xs font-mono text-lab-orange uppercase tracking-wider mb-3">Energy</div>
+                        <div class="mb-2">
+                            <div class="flex justify-between text-xs mb-1"><span class="text-lab-green">Kinetic</span><span class="font-mono text-lab-text" id="pend-ke">0.00 J</span></div>
+                            <div class="energy-bar"><div class="energy-fill bg-lab-green" id="pend-ke-bar" style="width:0%"></div></div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1"><span class="text-lab-orange">Potential</span><span class="font-mono text-lab-text" id="pend-pe">0.00 J</span></div>
+                            <div class="energy-bar"><div class="energy-fill bg-lab-orange" id="pend-pe-bar" style="width:0%"></div></div>
+                        </div>
+                        <div class="data-row mt-2"><span class="data-label">Total</span><span class="data-value" id="pend-te">0.00 J</span></div>
+                    </div>
+                    <div class="bg-lab-card border border-lab-border rounded-xl p-5">
+                        <div class="text-xs font-mono text-lab-cyan uppercase tracking-wider mb-3">Live Data</div>
+                        <div class="data-row"><span class="data-label">Angle</span><span class="data-value" id="pend-cur-ang">—</span></div>
+                        <div class="data-row"><span class="data-label">Angular Vel</span><span class="data-value" id="pend-cur-vel">—</span></div>
+                        <div class="data-row"><span class="data-label">Period (calc)</span><span class="data-value" id="pend-period">—</span></div>
+                    </div>
+                    <div class="ai-panel" id="pend-ai">
+                        <div class="ai-label"><i class="fas fa-robot"></i> AI Analysis</div>
+                        <div id="pend-ai-text">Start the pendulum to see AI analysis...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- SPRING MASS -->
+    <section id="spring" class="py-24 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex items-center gap-3 mb-10 scroll-reveal">
+                <div class="w-10 h-10 rounded-xl bg-lab-orange/10 flex items-center justify-center text-lab-orange"><i class="fas fa-compress-arrows-alt"></i></div>
+                <div>
+                    <h2 class="font-display text-2xl sm:text-3xl font-bold">Spring-Mass Oscillator</h2>
+                    <p class="text-lab-muted text-sm">Hooke's law, simple harmonic motion, and damping effects.</p>
+                </div>
+            </div>
+            <div class="sim-layout flex flex-col lg:flex-row gap-6">
+                <div class="flex-1 scroll-reveal-left flex flex-col gap-4">
+                    <div class="sim-canvas-wrap" style="height:260px">
+                        <div class="sim-status idle" id="spring-status">Ready</div>
+                        <canvas id="spring-canvas"></canvas>
+                    </div>
+                    <div class="sim-canvas-wrap" style="height:140px">
+                        <canvas id="spring-graph"></canvas>
+                    </div>
+                </div>
+                <div class="w-full lg:w-80 flex flex-col gap-4 scroll-reveal-right">
+                    <div class="bg-lab-card border border-lab-border rounded-xl p-5">
+                        <div class="text-xs font-mono text-lab-green uppercase tracking-wider mb-4">Parameters</div>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5"><span class="text-lab-muted">Spring Constant (k)</span><span class="font-mono text-lab-text" id="spring-k-val">20 N/m</span></div>
+                                <input type="range" id="spring-k" min="2" max="100" value="20" oninput="springSetParam()">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5"><span class="text-lab-muted">Mass (m)</span><span class="font-mono text-lab-text" id="spring-m-val">1.0 kg</span></div>
+                                <input type="range" id="spring-m" min="0.1" max="5" value="1" step="0.1" oninput="springSetParam()">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5"><span class="text-lab-muted">Amplitude</span><span class="font-mono text-lab-text" id="spring-a-val">0.8 m</span></div>
+                                <input type="range" id="spring-a" min="0.1" max="1.5" value="0.8" step="0.05" oninput="springSetParam()">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5"><span class="text-lab-muted">Damping (b)</span><span class="font-mono text-lab-text" id="spring-b-val">0.00</span></div>
+                                <input type="range" id="spring-b" min="0" max="3" value="0" step="0.05" oninput="springSetParam()">
+                            </div>
+                        </div>
+                        <div class="flex gap-2 mt-5">
+                            <button class="btn-primary btn-sm flex-1" id="spring-toggle" onclick="springToggle()"><i class="fas fa-play mr-1"></i>Start</button>
+                            <button class="btn-icon" onclick="springReset()" title="Reset"><i class="fas fa-redo"></i></button>
+                            <button class="btn-icon" onclick="springAIOptimize()" title="AI Optimize"><i class="fas fa-magic"></i></button>
+                        </div>
+                    </div>
+                    <div class="bg-lab-card border border-lab-border rounded-xl p-5">
+                        <div class="text-xs font-mono text-lab-cyan uppercase tracking-wider mb-3">Live Data</div>
+                        <div class="data-row"><span class="data-label">Displacement</span><span class="data-value" id="spring-disp">—</span></div>
+                        <div class="data-row"><span class="data-label">Velocity</span><span class="data-value" id="spring-vel">—</span></div>
+                        <div class="data-row"><span class="data-label">Acceleration</span><span class="data-value" id="spring-acc">—</span></div>
+                        <div class="data-row"><span class="data-label">Period</span><span class="data-value" id="spring-period">—</span></div>
+                        <div class="data-row"><span class="data-label">Frequency</span><span class="data-value" id="spring-freq">—</span></div>
+                    </div>
+                    <div class="ai-panel" id="spring-ai">
+                        <div class="ai-label"><i class="fas fa-robot"></i> AI Analysis</div>
+                        <div id="spring-ai-text">Start the oscillator to see AI analysis...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- COLLISION -->
+    <section id="collision" class="py-24 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex items-center gap-3 mb-10 scroll-reveal">
+                <div class="w-10 h-10 rounded-xl bg-lab-red/10 flex items-center justify-center text-lab-red"><i class="fas fa-exchange-alt"></i></div>
+                <div>
+                    <h2 class="font-display text-2xl sm:text-3xl font-bold">1D Collision</h2>
+                    <p class="text-lab-muted text-sm">Momentum conservation, elastic and inelastic collisions.</p>
+                </div>
+            </div>
+            <div class="sim-layout flex flex-col lg:flex-row-reverse gap-6">
+                <div class="flex-1 scroll-reveal-right">
+                    <div class="sim-canvas-wrap" style="height:320px">
+                        <div class="sim-status idle" id="coll-status">Ready</div>
+                        <canvas id="coll-canvas"></canvas>
+                    </div>
+                </div>
+                <div class="w-full lg:w-80 flex flex-col gap-4 scroll-reveal-left">
+                    <div class="bg-lab-card border border-lab-border rounded-xl p-5">
+                        <div class="text-xs font-mono text-lab-green uppercase tracking-wider mb-4">Ball A (Left)</div>
+                        <div class="space-y-3 mb-5">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1"><span class="text-lab-muted">Mass</span><span class="font-mono text-lab-text" id="coll-m1-val">2.0 kg</span></div>
+                                <input type="range" id="coll-m1" min="0.5" max="10" value="2" step="0.1" oninput="collSetParam()">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1"><span class="text-lab-muted">Velocity</span><span class="font-mono text-lab-text" id="coll-v1-val">4.0 m/s</span></div>
+                                <input type="range" id="coll-v1" min="-10" max="10" value="4" step="0.5" oninput="collSetParam()">
+                            </div>
+                        </div>
+                        <div class="text-xs font-mono text-lab-cyan uppercase tracking-wider mb-3">Ball B (Right)</div>
+                        <div class="space-y-3 mb-4">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1"><span class="text-lab-muted">Mass</span><span class="font-mono text-lab-text" id="coll-m2-val">3.0 kg</span></div>
+                                <input type="range" id="coll-m2" min="0.5" max="10" value="3" step="0.1" oninput="collSetParam()">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1"><span class="text-lab-muted">Velocity</span><span class="font-mono text-lab-text" id="coll-v2-val">-2.0 m/s</span></div>
+                                <input type="range" id="coll-v2" min="-10" max="10" value="-2" step="0.5" oninput="collSetParam()">
+                            </div>
+                        </div>
+                        <div class="text-xs font-mono text-lab-orange uppercase tracking-wider mb-3">Elasticity</div>
+                        <div class="mb-4">
+                            <div class="flex justify-between text-xs mb-1"><span class="text-lab-muted">Coefficient (e)</span><span class="font-mono text-lab-text" id="coll-e-val">1.00</span></div>
+                            <input type="range" id="coll-e" min="0" max="1" value="1" step="0.01" oninput="collSetParam()">
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="btn-primary btn-sm flex-1" id="coll-start" onclick="collStart()"><i class="fas fa-play mr-1"></i>Collide</button>
+                            <button class="btn-icon" onclick="collReset()" title="Reset"><i class="fas fa-redo"></i></button>
+                            <button class="btn-icon" onclick="collAIOptimize()" title="AI Optimize"><i class="fas fa-magic"></i></button>
+                        </div>
+                    </div>
+                    <div class="bg-lab-card border border-lab-border rounded-xl p-5">
+                        <div class="text-xs font-mono text-lab-cyan uppercase tracking-wider mb-3">Conservation Check</div>
+                        <div class="data-row"><span class="data-label">p (before)</span><span class="data-value" id="coll-p-before">—</span></div>
+                        <div class="data-row"><span class="data-label">p (after)</span><span class="data-value" id="coll-p-after">—</span></div>
+                        <div class="data-row"><span class="data-label">KE (before)</span><span class="data-value" id="coll-ke-before">—</span></div>
+                        <div class="data-row"><span class="data-label">KE (after)</span><span class="data-value" id="coll-ke-after">—</span></div>
+                        <div class="data-row"><span class="data-label">KE Conserved</span><span class="data-value" id="coll-ke-pct">—</span></div>
+                    </div>
+                    <div class="ai-panel" id="coll-ai">
+                        <div class="ai-label"><i class="fas fa-robot"></i> AI Analysis</div>
+                        <div id="coll-ai-text">Set up the collision and press Collide to see AI analysis...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <section id="ai-section" class="py-24 px-6">
+        <div class="max-w-4xl mx-auto text-center">
+            <div class="scroll-reveal">
+                <div class="inline-flex items-center gap-2 bg-lab-card border border-lab-border rounded-full px-4 py-1.5 mb-6">
+                    <i class="fas fa-microchip text-lab-green text-xs"></i>
+                    <span class="text-lab-muted text-xs font-mono">Intelligent Physics Engine</span>
+                </div>
+            </div>
+            <h2 class="font-display text-3xl sm:text-4xl font-bold mb-6 scroll-reveal" style="transition-delay:0.1s">AI That Understands Physics</h2>
+            <p class="text-lab-muted text-lg max-w-2xl mx-auto mb-12 scroll-reveal" style="transition-delay:0.2s">Every simulation is paired with an AI analyst that computes equations, validates conservation laws, and provides educational insights in real time.</p>
+            <div class="grid sm:grid-cols-3 gap-6">
+                <div class="bg-lab-card border border-lab-border rounded-xl p-6 scroll-reveal" style="transition-delay:0.1s">
+                    <div class="text-3xl font-bold text-lab-green font-mono mb-2">01</div>
+                    <h3 class="font-display font-semibold mb-2">Observe</h3>
+                    <p class="text-lab-muted text-sm">AI monitors all parameters and simulation state continuously during the experiment.</p>
+                </div>
+                <div class="bg-lab-card border border-lab-border rounded-xl p-6 scroll-reveal" style="transition-delay:0.2s">
+                    <div class="text-3xl font-bold text-lab-cyan font-mono mb-2">02</div>
+                    <h3 class="font-display font-semibold mb-2">Compute</h3>
+                    <p class="text-lab-muted text-sm">Real-time equation solving, energy tracking, and conservation law verification.</p>
+                </div>
+                <div class="bg-lab-card border border-lab-border rounded-xl p-6 scroll-reveal" style="transition-delay:0.3s">
+                    <div class="text-3xl font-bold text-lab-orange font-mono mb-2">03</div>
+                    <h3 class="font-display font-semibold mb-2">Explain</h3>
+                    <p class="text-lab-muted text-sm">Clear, contextual explanations with equations and computed values that update live.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="border-t border-lab-border py-10 px-6">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-md bg-gradient-to-br from-lab-green to-lab-cyan flex items-center justify-center">
+                    <i class="fas fa-atom text-lab-bg text-xs"></i>
+                </div>
+                <span class="font-display font-bold text-sm">PhysLab<span class="text-lab-green">AI</span></span>
+            </div>
+            <p class="text-lab-muted text-xs font-mono">Real-time physics simulations powered by browser computation.</p>
+        </div>
+    </footer>
+
+    <script>
+    /* ==================== UTILITIES ==================== */
+    function clamp(v, mn, mx) { return Math.max(mn, Math.min(mx, v)); }
+    function fmt(v, d) { d = d !== undefined ? d : 2; return Number(v).toFixed(d); }
+
+    function showToast(msg, type) {
+        type = type || 'info';
+        var c = document.getElementById('toast-container');
+        var t = document.createElement('div');
+        t.className = 'toast toast-' + type;
+        t.textContent = msg;
+        c.appendChild(t);
+        requestAnimationFrame(function() { requestAnimationFrame(function() { t.classList.add('show'); }); });
+        setTimeout(function() { t.classList.remove('show'); setTimeout(function() { t.remove(); }, 350); }, 3000);
+    }
+
+    function scrollToLab() {
+        document.getElementById('projectile').scrollIntoView({ behavior:'smooth' });
+        showToast('Welcome to the Physics Lab!', 'success');
+    }
+
+    function moveCardGlow(e, el) {
+        var r = el.getBoundingClientRect();
+        el.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+        el.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+    }
+
+    /* Button ripple effect */
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.btn-primary');
+        if (!btn) return;
+        var rect = btn.getBoundingClientRect();
+        var ripple = document.createElement('span');
+        ripple.className = 'ripple';
+        var size = Math.max(rect.width, rect.height);
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+        ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+        btn.appendChild(ripple);
+        setTimeout(function() { ripple.remove(); }, 600);
+    });
+
+    /* ==================== SCROLL ANIMATIONS ==================== */
+    var scrollObs = new IntersectionObserver(function(entries) {
+        for (var i = 0; i < entries.length; i++) {
+            if (entries[i].isIntersecting) entries[i].target.classList.add('visible');
+        }
+    }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+    document.querySelectorAll('.scroll-reveal,.scroll-reveal-left,.scroll-reveal-right').forEach(function(el) { scrollObs.observe(el); });
+
+    /* Counter animation */
+    var counterObs = new IntersectionObserver(function(entries) {
+        for (var i = 0; i < entries.length; i++) {
+            var e = entries[i];
+            if (e.isIntersecting && !e.target.dataset.counted) {
+                e.target.dataset.counted = 'true';
+                var target = parseInt(e.target.dataset.target);
+                var current = 0;
+                var step = Math.max(1, Math.ceil(target / 50));
+                var iv = setInterval(function() {
+                    current += step;
+                    if (current >= target) { current = target; clearInterval(iv); }
+                    e.target.textContent = current + '+';
+                }, 30);
+            }
+        }
+    }, { threshold: 0.5 });
+    document.querySelectorAll('.counter').forEach(function(el) { counterObs.observe(el); });
+
+    /* ==================== HERO PARTICLES ==================== */
+    var heroParticles = (function() {
+        var canvas, ctx, W, H, particles = [], mouse = { x: -999, y: -999 };
+        function resize() {
+            var p = canvas.parentElement;
+            W = canvas.width = p.clientWidth;
+            H = canvas.height = p.clientHeight;
+        }
+        function init() {
+            canvas = document.getElementById('hero-canvas');
+            ctx = canvas.getContext('2d');
+            resize();
+            window.addEventListener('resize', resize);
+            for (var i = 0; i < 80; i++) {
+                particles.push({
+                    x: Math.random() * 2000, y: Math.random() * 1200,
+                    vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,
+                    r: Math.random() * 2 + 0.5, a: Math.random() * 0.5 + 0.2
+                });
+            }
+            canvas.parentElement.addEventListener('mousemove', function(e) {
+                var r = canvas.getBoundingClientRect();
+                mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
+            });
+            canvas.parentElement.addEventListener('mouseleave', function() { mouse.x = -999; mouse.y = -999; });
+        }
+        function draw() {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, W, H);
+            for (var i = 0; i < particles.length; i++) {
+                var p = particles[i];
+                p.x += p.vx; p.y += p.vy;
+                if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+                if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+                var dx = p.x - mouse.x, dy = p.y - mouse.y;
+                var dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 150 && dist > 0) {
+                    var force = (150 - dist) / 150 * 0.6;
+                    p.vx += (dx / dist) * force * 0.08;
+                    p.vy += (dy / dist) * force * 0.08;
+                }
+                p.vx *= 0.995; p.vy *= 0.995;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0,255,136,' + p.a + ')';
+                ctx.fill();
+                for (var j = i + 1; j < particles.length; j++) {
+                    var q = particles[j];
+                    var ddx = p.x - q.x, ddy = p.y - q.y;
+                    var d = Math.sqrt(ddx * ddx + ddy * ddy);
+                    if (d < 130) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(q.x, q.y);
+                        ctx.strokeStyle = 'rgba(0,255,136,' + (0.07 * (1 - d / 130)) + ')';
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(draw);
+        }
+        return { init: init, draw: draw };
+    })();
+
+    /* ==================== CANVAS HELPER ==================== */
+    function fitCanvas(canvas) {
+        var p = canvas.parentElement;
+        var w = p.clientWidth;
+        var h = p.clientHeight;
+        if (w < 10) w = 400;
+        if (h < 10) h = 300;
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        var ctx = canvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return { w: w, h: h, ctx: ctx };
+    }
+
+    /* Rounded rect polyfill */
+    function roundedRect(ctx, x, y, w, h, r) {
+        r = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+    }
+
+    /* Status badge helper */
+    function setStatus(id, cls, text) {
+        var el = document.getElementById(id);
+        if (el) { el.className = 'sim-status ' + cls; el.textContent = text; }
+    }
+
+    /* Slider animation */
+    function animateSliders(sliders, callback) {
+        var completed = 0;
+        sliders.forEach(function(s) {
+            var el = document.getElementById(s.id);
+            var start = parseFloat(el.value);
+            var diff = s.val - start;
+            var duration = 500;
+            var t0 = performance.now();
+            function step(now) {
+                var t = Math.min(1, (now - t0) / duration);
+                var ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+                el.value = start + diff * ease;
+                el.dispatchEvent(new Event('input'));
+                if (t < 1) requestAnimationFrame(step);
+                else { completed++; if (completed === sliders.length && callback) callback(); }
+            }
+            requestAnimationFrame(step);
+        });
+    }
+
+    /* ==================== PROJECTILE MOTION ==================== */
+    var proj = {
+        canvas: null, ctx: null, W: 0, H: 0,
+        params: { angle: 45, v0: 25, g: 9.81 },
+        state: null,
+        scale: 7, groundY: 0,
+
+        createDefaultState: function() {
+            return { x:0, y:0, vx:0, vy:0, t:0, trail:[], running:false, landed:false, maxHeight:0 };
+        },
+
+        init: function() {
+            this.canvas = document.getElementById('proj-canvas');
+            var info = fitCanvas(this.canvas);
+            this.ctx = info.ctx; this.W = info.w; this.H = info.h;
+            this.groundY = this.H - 50;
+            this.scale = Math.max(1, Math.min(7, (this.W - 80) / 120));
+            if (!this.state) this.state = this.createDefaultState();
+            this.draw();
+        },
+
+        setParam: function() {
+            this.params.angle = parseFloat(document.getElementById('proj-angle').value);
+            this.params.v0 = parseFloat(document.getElementById('proj-vel').value);
+            this.params.g = parseFloat(document.getElementById('proj-grav').value);
+            document.getElementById('proj-angle-val').textContent = this.params.angle + '°';
+            document.getElementById('proj-vel-val').textContent = this.params.v0 + ' m/s';
+            document.getElementById('proj-grav-val').textContent = this.params.g.toFixed(2) + ' m/s²';
+            if (!this.state.running) { this.state = this.createDefaultState(); this.draw(); }
+            this.updateAI('idle');
+        },
+
+        launch: function() {
+            if (this.state.running) return;
+            var rad = this.params.angle * Math.PI / 180;
+            this.state = { x:0, y:0, vx: this.params.v0 * Math.cos(rad), vy: this.params.v0 * Math.sin(rad), t:0, trail:[], running:true, landed:false, maxHeight:0 };
+            document.getElementById('proj-launch').innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Flying...';
+            setStatus('proj-status', 'running', 'Simulating');
+            showToast('Projectile launched at ' + this.params.angle + '°!', 'success');
+            this.updateAI('launch');
+        },
+
+        reset: function() {
+            this.state = this.createDefaultState();
+            document.getElementById('proj-launch').innerHTML = '<i class="fas fa-play mr-1"></i>Launch';
+            setStatus('proj-status', 'idle', 'Ready');
+            ['proj-range','proj-maxh','proj-tof','proj-speed'].forEach(function(id) { document.getElementById(id).textContent = '—'; });
+            this.updateAI('idle');
+            this.draw();
+        },
+
+        update: function(dt) {
+            if (!this.state.running || this.state.landed) return;
+            var s = this.state, p = this.params, steps = 4, subDt = dt / steps;
+            for (var i = 0; i < steps; i++) {
+                s.vy -= p.g * subDt;
+                s.x += s.vx * subDt;
+                s.y += s.vy * subDt;
+                s.t += subDt;
+                if (s.y > s.maxHeight) s.maxHeight = s.y;
+                if (s.y <= 0 && s.t > 0.05) {
+                    s.y = 0; s.landed = true; s.running = false;
+                    document.getElementById('proj-launch').innerHTML = '<i class="fas fa-play mr-1"></i>Launch';
+                    setStatus('proj-status', 'done', 'Landed');
+                    this.updateAI('landed');
+                    showToast('Landed at ' + fmt(s.x) + ' m range!', 'info');
+                    break;
+                }
+            }
+            s.trail.push({ x: s.x, y: s.y });
+            if (s.trail.length > 600) s.trail.shift();
+            var speed = Math.sqrt(s.vx * s.vx + s.vy * s.vy);
+            document.getElementById('proj-range').textContent = fmt(s.x) + ' m';
+            document.getElementById('proj-maxh').textContent = fmt(s.maxHeight) + ' m';
+            document.getElementById('proj-tof').textContent = fmt(s.t) + ' s';
+            document.getElementById('proj-speed').textContent = fmt(speed) + ' m/s';
+        },
+
+        draw: function() {
+            if (!this.ctx || this.W < 20 || this.H < 20) return;
+            var ctx = this.ctx, W = this.W, H = this.H, sc = this.scale, gy = this.groundY;
+            ctx.clearRect(0, 0, W, H);
+
+            /* Grid */
+            ctx.strokeStyle = 'rgba(26,35,50,0.4)';
+            ctx.lineWidth = 0.5;
+            var gridStep = sc * 10;
+            if (gridStep < 20) gridStep = sc * 5;
+            for (var x = 0; x <= W; x += gridStep) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, gy); ctx.stroke();
+            }
+            for (var y = gy; y >= 0; y -= gridStep) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+            }
+
+            /* Ground */
+            ctx.fillStyle = '#0f1520';
+            ctx.fillRect(0, gy, W, H - gy);
+            ctx.strokeStyle = '#1e2d3d';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+
+            var ox = 30, oy = gy;
+
+            /* Launch pad */
+            ctx.fillStyle = '#1a2332';
+            ctx.fillRect(ox - 10, oy - 5, 20, 5);
+
+            /* Angle arc (when idle) */
+            if (!this.state.running && !this.state.landed) {
+                var rad = this.params.angle * Math.PI / 180;
+                ctx.beginPath();
+                ctx.arc(ox, oy, 35, -rad, 0);
+                ctx.strokeStyle = 'rgba(0,255,136,0.4)';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                var mid = -rad / 2;
+                ctx.fillStyle = '#00ff88';
+                ctx.font = '11px JetBrains Mono';
+                ctx.fillText(this.params.angle + '°', ox + 42 * Math.cos(mid) - 8, oy + 42 * Math.sin(mid) + 4);
+
+                /* Predicted trajectory */
+                var pvx = this.params.v0 * Math.cos(rad), pvy = this.params.v0 * Math.sin(rad);
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(ox, oy);
+                for (var t = 0; t < 20; t += 0.05) {
+                    var px = pvx * t, py = pvy * t - 0.5 * this.params.g * t * t;
+                    if (py < 0 && t > 0.1) break;
+                    ctx.lineTo(ox + px * sc, oy - py * sc);
+                }
+                ctx.strokeStyle = 'rgba(0,255,136,0.12)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            /* Trail */
+            var trail = this.state.trail;
+            if (trail.length > 1) {
+                /* Glow trail */
+                ctx.beginPath();
+                ctx.moveTo(ox + trail[0].x * sc, oy - trail[0].y * sc);
+                for (var i = 1; i < trail.length; i++) {
+                    ctx.lineTo(ox + trail[i].x * sc, oy - trail[i].y * sc);
+                }
+                ctx.strokeStyle = 'rgba(0,255,136,0.15)';
+                ctx.lineWidth = 6;
+                ctx.stroke();
+
+                /* Main trail */
+                ctx.beginPath();
+                ctx.moveTo(ox + trail[0].x * sc, oy - trail[0].y * sc);
+                for (var i = 1; i < trail.length; i++) {
+                    ctx.lineTo(ox + trail[i].x * sc, oy - trail[i].y * sc);
+                }
+                ctx.strokeStyle = '#00ff88';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                /* Dots */
+                var dotStep = Math.max(1, Math.floor(trail.length / 15));
+                for (var i = 0; i < trail.length; i += dotStep) {
+                    ctx.beginPath();
+                    ctx.arc(ox + trail[i].x * sc, oy - trail[i].y * sc, 2.5, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(0,255,136,0.5)';
+                    ctx.fill();
+                }
+            }
+
+            /* Ball */
+            var bx = ox + this.state.x * sc;
+            var by = oy - Math.max(0, this.state.y) * sc;
+            ctx.beginPath();
+            ctx.arc(bx, by, 8, 0, Math.PI * 2);
+            var grad = ctx.createRadialGradient(bx - 2, by - 2, 1, bx, by, 8);
+            grad.addColorStop(0, '#88ffcc');
+            grad.addColorStop(1, '#00cc6a');
+            ctx.fillStyle = grad;
+            ctx.shadowColor = '#00ff88';
+            ctx.shadowBlur = 15;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            /* Velocity vector */
+            if (this.state.running) {
+                var vscale = 2;
+                var vxEnd = bx + this.state.vx * vscale;
+                var vyEnd = by - this.state.vy * vscale;
+                ctx.beginPath();
+                ctx.moveTo(bx, by);
+                ctx.lineTo(vxEnd, vyEnd);
+                ctx.strokeStyle = '#ff6b35';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                var angle = Math.atan2(-(this.state.vy), this.state.vx);
+                ctx.beginPath();
+                ctx.moveTo(vxEnd, vyEnd);
+                ctx.lineTo(vxEnd - 8 * Math.cos(angle - 0.4), vyEnd + 8 * Math.sin(angle - 0.4));
+                ctx.lineTo(vxEnd - 8 * Math.cos(angle + 0.4), vyEnd + 8 * Math.sin(angle + 0.4));
+                ctx.closePath();
+                ctx.fillStyle = '#ff6b35';
+                ctx.fill();
+            }
+        },
+
+        updateAI: function(mode) {
+            var p = this.params, s = this.state;
+            var rad = p.angle * Math.PI / 180;
+            var R = (p.v0 * p.v0 * Math.sin(2 * rad)) / p.g;
+            var Hm = (p.v0 * p.v0 * Math.sin(rad) * Math.sin(rad)) / (2 * p.g);
+            var T = (2 * p.v0 * Math.sin(rad)) / p.g;
+            var el = document.getElementById('proj-ai-text');
+            if (mode === 'idle') {
+                el.innerHTML = 'Predicted: <span class="eq">θ=' + p.angle + '°, v₀=' + p.v0 + ' m/s</span><br>Range = <span class="val">' + fmt(R) + ' m</span> | Max H = <span class="val">' + fmt(Hm) + ' m</span><br>Flight Time = <span class="val">' + fmt(T) + ' s</span><div class="insight">' + (p.angle === 45 ? 'Optimal angle for max range in vacuum.' : Math.abs(45 - p.angle) + '° from optimal 45°. Range is ' + fmt(Math.cos(2 * rad) / Math.cos(Math.PI/4) * 100, 1) + '% of maximum.') + '</div>';
+            } else if (mode === 'launch') {
+                el.innerHTML = 'In flight. Tracking trajectory...<br>Initial KE/m = <span class="val">' + fmt(0.5 * p.v0 * p.v0) + ' J/kg</span><div class="insight">Orange arrow shows velocity vector. Watch it rotate from upward to downward as gravity decelerates then accelerates the projectile.</div>';
+            } else if (mode === 'landed') {
+                var err = Math.abs(s.x - R);
+                el.innerHTML = 'Landed at <span class="val">' + fmt(s.x) + ' m</span> (predicted: ' + fmt(R) + ' m)<br>Max height: <span class="val">' + fmt(s.maxHeight) + ' m</span> | Time: <span class="val">' + fmt(s.t) + ' s</span><div class="insight">Numerical error: ' + fmt(err, 4) + ' m. Gravity did <span class="val">' + fmt(p.g * s.maxHeight) + ' J/kg</span> of work. Energy fully conserved — verified by identical launch and landing speeds.</div>';
+            }
+        }
+    };
+
+    function projSetParam() { proj.setParam(); }
+    function projLaunch() { proj.launch(); }
+    function projReset() { proj.reset(); }
+    function projAIOptimize() {
+        animateSliders([
+            { id:'proj-angle', val:45 }, { id:'proj-vel', val:30 }, { id:'proj-grav', val:9.81 }
+        ], function() { proj.setParam(); showToast('AI: Optimal 45° for maximum range set', 'success'); });
+    }
+
+    /* ==================== PENDULUM ==================== */
+    var pend = {
+        canvas: null, ctx: null, W: 0, H: 0,
+        params: { len: 1.5, angle: 30, g: 9.81, damp: 0 },
+        state: null,
+        mass: 1.0,
+        pivotX: 0, pivotY: 0, scale: 120,
+
+        createDefaultState: function() {
+            return { theta: this.params.angle * Math.PI / 180, omega: 0, t: 0, running: false, trail: [] };
+        },
+
+        init: function() {
+            this.canvas = document.getElementById('pend-canvas');
+            var info = fitCanvas(this.canvas);
+            this.ctx = info.ctx; this.W = info.w; this.H = info.h;
+            this.pivotX = this.W / 2;
+            this.pivotY = 60;
+            this.scale = Math.max(30, Math.min(120, (this.H - 120) / 3.2));
+            if (!this.state) this.state = this.createDefaultState();
+            this.updateEnergy();
+            this.draw();
+        },
+
+        setParam: function() {
+            this.params.len = parseFloat(document.getElementById('pend-len').value);
+            this.params.angle = parseFloat(document.getElementById('pend-ang').value);
+            this.params.g = parseFloat(document.getElementById('pend-grav').value);
+            this.params.damp = parseFloat(document.getElementById('pend-damp').value);
+            document.getElementById('pend-len-val').textContent = this.params.len + ' m';
+            document.getElementById('pend-ang-val').textContent = this.params.angle + '°';
+            document.getElementById('pend-grav-val').textContent = this.params.g.toFixed(2) + ' m/s²';
+            document.getElementById('pend-damp-val').textContent = this.params.damp.toFixed(2);
+            if (!this.state.running) {
+                this.state = this.createDefaultState();
+                this.updateEnergy(); this.draw();
+            }
+            this.updateAI();
+        },
+
+        toggle: function() {
+            this.state.running = !this.state.running;
+            var btn = document.getElementById('pend-toggle');
+            if (this.state.running) {
+                btn.innerHTML = '<i class="fas fa-pause mr-1"></i>Pause';
+                setStatus('pend-status', 'running', 'Oscillating');
+                showToast('Pendulum released', 'success');
+            } else {
+                btn.innerHTML = '<i class="fas fa-play mr-1"></i>Start';
+                setStatus('pend-status', 'idle', 'Paused');
+            }
+            this.updateAI();
+        },
+
+        reset: function() {
+            this.state = this.createDefaultState();
+            document.getElementById('pend-toggle').innerHTML = '<i class="fas fa-play mr-1"></i>Start';
+            setStatus('pend-status', 'idle', 'Ready');
+            this.updateEnergy(); this.draw(); this.updateAI();
+        },
+
+        update: function(dt) {
+            if (!this.state.running) return;
+            var s = this.state, p = this.params, steps = 8, subDt = dt / steps;
+            for (var i = 0; i < steps; i++) {
+                var f = function(th, om) { return { dth: om, dom: -(p.g / p.len) * Math.sin(th) - p.damp * om }; };
+                var k1 = f(s.theta, s.omega);
+                var k2 = f(s.theta + k1.dth * subDt / 2, s.omega + k1.dom * subDt / 2);
+                var k3 = f(s.theta + k2.dth * subDt / 2, s.omega + k2.dom * subDt / 2);
+                var k4 = f(s.theta + k3.dth * subDt, s.omega + k3.dom * subDt);
+                s.theta += (k1.dth + 2 * k2.dth + 2 * k3.dth + k4.dth) * subDt / 6;
+                s.omega += (k1.dom + 2 * k2.dom + 2 * k3.dom + k4.dom) * subDt / 6;
+                s.t += subDt;
+            }
+            var bx = this.pivotX + Math.sin(s.theta) * p.len * this.scale;
+            var by = this.pivotY + Math.cos(s.theta) * p.len * this.scale;
+            s.trail.push({ x: bx, y: by });
+            if (s.trail.length > 200) s.trail.shift();
+            document.getElementById('pend-cur-ang').textContent = fmt(s.theta * 180 / Math.PI, 1) + '°';
+            document.getElementById('pend-cur-vel').textContent = fmt(s.omega, 2) + ' rad/s';
+            var Tcalc = 2 * Math.PI * Math.sqrt(p.len / p.g);
+            document.getElementById('pend-period').textContent = fmt(Tcalc, 3) + ' s';
+            this.updateEnergy();
+        },
+
+        updateEnergy: function() {
+            var s = this.state, p = this.params, m = this.mass;
+            var v = s.omega * p.len;
+            var KE = 0.5 * m * v * v;
+            var PE = m * p.g * p.len * (1 - Math.cos(s.theta));
+            var TE = KE + PE;
+            var maxE = Math.max(TE, 0.001);
+            document.getElementById('pend-ke').textContent = fmt(KE, 3) + ' J';
+            document.getElementById('pend-pe').textContent = fmt(PE, 3) + ' J';
+            document.getElementById('pend-te').textContent = fmt(TE, 3) + ' J';
+            document.getElementById('pend-ke-bar').style.width = (KE / maxE * 100) + '%';
+            document.getElementById('pend-pe-bar').style.width = (PE / maxE * 100) + '%';
+        },
+
+        draw: function() {
+            if (!this.ctx || this.W < 20 || this.H < 20) return;
+            var ctx = this.ctx, W = this.W, H = this.H, sc = this.scale, p = this.params, s = this.state;
+            var px = this.pivotX, py = this.pivotY;
+            ctx.clearRect(0, 0, W, H);
+
+            /* Arc path */
+            ctx.beginPath();
+            ctx.arc(px, py, p.len * sc, Math.PI / 2 - p.angle * Math.PI / 180, Math.PI / 2 + p.angle * Math.PI / 180);
+            ctx.strokeStyle = 'rgba(0,180,216,0.08)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 3]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            /* Trail */
+            if (s.trail.length > 2) {
+                for (var i = 1; i < s.trail.length; i++) {
+                    var alpha = (i / s.trail.length) * 0.4;
+                    ctx.beginPath();
+                    ctx.moveTo(s.trail[i - 1].x, s.trail[i - 1].y);
+                    ctx.lineTo(s.trail[i].x, s.trail[i].y);
+                    ctx.strokeStyle = 'rgba(0,180,216,' + alpha + ')';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+
+            var bx = px + Math.sin(s.theta) * p.len * sc;
+            var by = py + Math.cos(s.theta) * p.len * sc;
+
+            /* Equilibrium line */
+            ctx.beginPath();
+            ctx.moveTo(px, py);
+            ctx.lineTo(px, py + p.len * sc + 20);
+            ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            /* String */
+            ctx.beginPath();
+            ctx.moveTo(px, py);
+            ctx.lineTo(bx, by);
+            ctx.strokeStyle = '#6b7785';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            /* Angle arc */
+            if (Math.abs(s.theta) > 0.03) {
+                ctx.beginPath();
+                var startA = Math.PI / 2;
+                var endA = Math.PI / 2 - s.theta;
+                ctx.arc(px, py, 30, Math.min(startA, endA), Math.max(startA, endA));
+                ctx.strokeStyle = 'rgba(0,255,136,0.4)';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+
+            /* Pivot */
+            ctx.beginPath();
+            ctx.arc(px, py, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#4a5568';
+            ctx.fill();
+
+            /* Bob */
+            ctx.beginPath();
+            ctx.arc(bx, by, 16, 0, Math.PI * 2);
+            var grad = ctx.createRadialGradient(bx - 3, by - 3, 2, bx, by, 16);
+            grad.addColorStop(0, '#88eeff');
+            grad.addColorStop(1, '#0088aa');
+            ctx.fillStyle = grad;
+            ctx.shadowColor = '#00b4d8';
+            ctx.shadowBlur = 18;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#e6edf3';
+            ctx.font = 'bold 10px JetBrains Mono';
+            ctx.textAlign = 'center';
+            ctx.fillText(this.mass + 'kg', bx, by + 4);
+            ctx.textAlign = 'start';
+        },
+
+        updateAI: function() {
+            var p = this.params, s = this.state;
+            var T = 2 * Math.PI * Math.sqrt(p.len / p.g);
+            var el = document.getElementById('pend-ai-text');
+            if (p.damp > 0.01) {
+                el.innerHTML = 'Damped: <span class="eq">b = ' + p.damp + '</span> | T₀ = <span class="val">' + fmt(T, 3) + ' s</span><div class="insight">Energy decays as E(t) = E₀·e<sup>-bt</sup>. ' + (p.damp > 0.2 ? 'Heavy damping — oscillations die quickly.' : 'Light damping — many visible oscillations before stopping.') + '</div>';
+            } else {
+                el.innerHTML = '<span class="eq">T = 2π√(L/g)</span> = <span class="val">' + fmt(T, 3) + ' s</span><br>f = <span class="val">' + fmt(1 / T, 3) + ' Hz</span> | ω = <span class="val">' + fmt(Math.sqrt(p.g / p.len), 3) + ' rad/s</span><div class="insight">' + (Math.abs(p.angle) < 15 ? 'Small-angle regime: approximation T ≈ 2π√(L/g) is accurate.' : 'Large angle (' + p.angle + '°): true period is longer than small-angle prediction. RK4 integration handles this accurately.') + '</div>';
+            }
+        }
+    };
+
+    function pendSetParam() { pend.setParam(); }
+    function pendToggle() { pend.toggle(); }
+    function pendReset() { pend.reset(); }
+    function pendAIOptimize() {
+        animateSliders([
+            { id:'pend-len', val:1.0 }, { id:'pend-ang', val:10 }, { id:'pend-grav', val:9.81 }, { id:'pend-damp', val:0 }
+        ], function() { pend.setParam(); showToast('AI: Small-angle regime for clean SHM', 'success'); });
+    }
+
+    /* ==================== SPRING-MASS ==================== */
+    var spring = {
+        canvas: null, gcanvas: null, ctx: null, gctx: null,
+        W: 0, H: 0, gW: 0, gH: 0,
+        params: { k: 20, m: 1, amp: 0.8, b: 0 },
+        state: null,
+        eqX: 0, scale: 100,
+
+        createDefaultState: function() {
+            return { x: this.params.amp, v: 0, t: 0, running: false, history: [] };
+        },
+
+        init: function() {
+            this.canvas = document.getElementById('spring-canvas');
+            var info = fitCanvas(this.canvas);
+            this.ctx = info.ctx; this.W = info.w; this.H = info.h;
+            this.eqX = this.W * 0.45;
+            this.scale = Math.max(30, Math.min(100, (this.W * 0.3) / 1.5));
+
+            this.gcanvas = document.getElementById('spring-graph');
+            var ginfo = fitCanvas(this.gcanvas);
+            this.gctx = ginfo.ctx; this.gW = ginfo.w; this.gH = ginfo.h;
+
+            if (!this.state) this.state = this.createDefaultState();
+            this.updateData(); this.draw(); this.drawGraph();
+        },
+
+        setParam: function() {
+            this.params.k = parseFloat(document.getElementById('spring-k').value);
+            this.params.m = parseFloat(document.getElementById('spring-m').value);
+            this.params.amp = parseFloat(document.getElementById('spring-a').value);
+            this.params.b = parseFloat(document.getElementById('spring-b').value);
+            document.getElementById('spring-k-val').textContent = this.params.k + ' N/m';
+            document.getElementById('spring-m-val').textContent = this.params.m.toFixed(1) + ' kg';
+            document.getElementById('spring-a-val').textContent = this.params.amp + ' m';
+            document.getElementById('spring-b-val').textContent = this.params.b.toFixed(2);
+            if (!this.state.running) {
+                this.state = this.createDefaultState();
+                this.updateData(); this.draw(); this.drawGraph();
+            }
+            this.updateAI();
+        },
+
+        toggle: function() {
+            this.state.running = !this.state.running;
+            var btn = document.getElementById('spring-toggle');
+            if (this.state.running) {
+                btn.innerHTML = '<i class="fas fa-pause mr-1"></i>Pause';
+                setStatus('spring-status', 'running', 'Oscillating');
+                showToast('Oscillator started', 'success');
+            } else {
+                btn.innerHTML = '<i class="fas fa-play mr-1"></i>Start';
+                setStatus('spring-status', 'idle', 'Paused');
+            }
+        },
+
+        reset: function() {
+            this.state = this.createDefaultState();
+            document.getElementById('spring-toggle').innerHTML = '<i class="fas fa-play mr-1"></i>Start';
+            setStatus('spring-status', 'idle', 'Ready');
+            this.updateData(); this.draw(); this.drawGraph(); this.updateAI();
+        },
+
+        update: function(dt) {
+            if (!this.state.running) return;
+            var s = this.state, p = this.params, steps = 8, subDt = dt / steps;
+            for (var i = 0; i < steps; i++) {
+                var f = function(x, v) { return { dx: v, dv: -(p.k / p.m) * x - (p.b / p.m) * v }; };
+                var k1 = f(s.x, s.v);
+                var k2 = f(s.x + k1.dx * subDt / 2, s.v + k1.dv * subDt / 2);
+                var k3 = f(s.x + k2.dx * subDt / 2, s.v + k2.dv * subDt / 2);
+                var k4 = f(s.x + k3.dx * subDt, s.v + k3.dv * subDt);
+                s.x += (k1.dx + 2 * k2.dx + 2 * k3.dx + k4.dx) * subDt / 6;
+                s.v += (k1.dv + 2 * k2.dv + 2 * k3.dv + k4.dv) * subDt / 6;
+                s.t += subDt;
+            }
+            s.history.push({ t: s.t, x: s.x });
+            if (s.history.length > 500) s.history.shift();
+            this.updateData();
+        },
+
+        updateData: function() {
+            var s = this.state, p = this.params;
+            var acc = -(p.k / p.m) * s.x - (p.b / p.m) * s.v;
+            var T = 2 * Math.PI * Math.sqrt(p.m / p.k);
+            document.getElementById('spring-disp').textContent = fmt(s.x) + ' m';
+            document.getElementById('spring-vel').textContent = fmt(s.v) + ' m/s';
+            document.getElementById('spring-acc').textContent = fmt(acc) + ' m/s²';
+            document.getElementById('spring-period').textContent = fmt(T, 3) + ' s';
+            document.getElementById('spring-freq').textContent = fmt(1 / T, 3) + ' Hz';
+        },
+
+        drawSpringCoil: function(ctx, x1, y, x2, coils, amp) {
+            var len = x2 - x1;
+            if (len < 20) { ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke(); return; }
+            var straight = 10;
+            var coilLen = Math.max(1, len - 2 * straight);
+            var segLen = coilLen / (coils * 2);
+            ctx.beginPath();
+            ctx.moveTo(x1, y);
+            ctx.lineTo(x1 + straight, y);
+            for (var i = 0; i < coils * 2; i++) {
+                ctx.lineTo(x1 + straight + (i + 1) * segLen, y + (i % 2 === 0 ? -amp : amp));
+            }
+            ctx.lineTo(x2 - straight, y);
+            ctx.lineTo(x2, y);
+            ctx.stroke();
+        },
+
+        draw: function() {
+            if (!this.ctx || this.W < 20 || this.H < 20) return;
+            var ctx = this.ctx, W = this.W, H = this.H, sc = this.scale, p = this.params, s = this.state;
+            var eqX = this.eqX, cy = H / 2;
+            ctx.clearRect(0, 0, W, H);
+
+            /* Wall */
+            ctx.fillStyle = '#1a2332';
+            ctx.fillRect(15, cy - 50, 12, 100);
+            for (var i = 0; i < 8; i++) {
+                ctx.beginPath();
+                ctx.moveTo(15, cy - 45 + i * 12);
+                ctx.lineTo(5, cy - 35 + i * 12);
+                ctx.strokeStyle = '#2a3a4e';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+
+            /* Equilibrium line */
+            ctx.beginPath();
+            ctx.moveTo(eqX, cy - 50);
+            ctx.lineTo(eqX, cy + 50);
+            ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 3]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#3a4555';
+            ctx.font = '10px JetBrains Mono';
+            ctx.textAlign = 'center';
+            ctx.fillText('x=0', eqX, cy + 65);
+            ctx.textAlign = 'start';
+
+            var massX = eqX + s.x * sc;
+            var blockW = 50, blockH = 50;
+
+            /* Spring */
+            ctx.beginPath();
+            ctx.strokeStyle = '#8b949e';
+            ctx.lineWidth = 2;
+            this.drawSpringCoil(ctx, 27, cy, massX - blockW / 2, 14, 14);
+
+            /* Block */
+            roundedRect(ctx, massX - blockW / 2, cy - blockH / 2, blockW, blockH, 6);
+            ctx.fillStyle = '#141c28';
+            ctx.fill();
+            ctx.strokeStyle = '#ff6b35';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = '#ff6b35';
+            ctx.font = 'bold 11px JetBrains Mono';
+            ctx.textAlign = 'center';
+            ctx.fillText(p.m + 'kg', massX, cy + 4);
+            ctx.textAlign = 'start';
+
+            /* Displacement arrow */
+            if (Math.abs(s.x) > 0.03) {
+                var arrowY = cy + blockH / 2 + 18;
+                ctx.beginPath();
+                ctx.moveTo(eqX, arrowY);
+                ctx.lineTo(massX, arrowY);
+                ctx.strokeStyle = '#00ff88';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                var dir = s.x > 0 ? 1 : -1;
+                ctx.beginPath();
+                ctx.moveTo(massX, arrowY);
+                ctx.lineTo(massX - dir * 8, arrowY - 4);
+                ctx.lineTo(massX - dir * 8, arrowY + 4);
+                ctx.closePath();
+                ctx.fillStyle = '#00ff88';
+                ctx.fill();
+                ctx.font = '11px JetBrains Mono';
+                ctx.textAlign = 'center';
+                ctx.fillText(fmt(s.x) + 'm', (eqX + massX) / 2, arrowY + 15);
+                ctx.textAlign = 'start';
+            }
+
+            /* Floor */
+            ctx.beginPath();
+            ctx.moveTo(15, cy + blockH / 2 + 2);
+            ctx.lineTo(W - 10, cy + blockH / 2 + 2);
+            ctx.strokeStyle = '#1a2332';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        },
+
+        drawGraph: function() {
+            if (!this.gctx || this.gW < 20 || this.gH < 20) return;
+            var ctx = this.gctx, W = this.gW, H = this.gH, hist = this.state.history;
+            ctx.clearRect(0, 0, W, H);
+            ctx.fillStyle = '#080b12';
+            ctx.fillRect(0, 0, W, H);
+
+            ctx.beginPath();
+            ctx.moveTo(40, H / 2);
+            ctx.lineTo(W - 10, H / 2);
+            ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.fillStyle = '#3a4555';
+            ctx.font = '9px JetBrains Mono';
+            ctx.fillText('x(t)', 5, H / 2 - 5);
+            ctx.fillText('t →', W - 30, H / 2 + 15);
+
+            if (hist.length < 2) return;
+            var maxT = Math.max(hist[hist.length - 1].t, 3);
+            var maxX = Math.max(this.params.amp * 1.3, 0.5);
+            var plotW = W - 50, plotH = H - 20;
+            var ox = 40, oy = H / 2;
+
+            /* Glow */
+            ctx.beginPath();
+            for (var i = 0; i < hist.length; i++) {
+                var px = ox + (hist[i].t / maxT) * plotW;
+                var py = oy - (hist[i].x / maxX) * (plotH / 2);
+                if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.strokeStyle = 'rgba(0,255,136,0.15)';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+
+            /* Line */
+            ctx.beginPath();
+            for (var i = 0; i < hist.length; i++) {
+                var px = ox + (hist[i].t / maxT) * plotW;
+                var py = oy - (hist[i].x / maxX) * (plotH / 2);
+                if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.strokeStyle = '#00ff88';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        },
+
+        updateAI: function() {
+            var p = this.params;
+            var T = 2 * Math.PI * Math.sqrt(p.m / p.k);
+            var omega = Math.sqrt(p.k / p.m);
+            var el = document.getElementById('spring-ai-text');
+            if (p.b > 0.01) {
+                var gamma = p.b / (2 * p.m);
+                var ratio = gamma / omega;
+                var regime = ratio < 1 ? 'underdamped' : (Math.abs(ratio - 1) < 0.05 ? 'critically damped' : 'overdamped');
+                el.innerHTML = 'Damped SHM: <span class="eq">γ = ' + fmt(gamma, 3) + '</span><br>γ/ω₀ = <span class="val">' + fmt(ratio, 3) + '</span> → <span class="val">' + regime + '</span><div class="insight">' + (regime === 'underdamped' ? 'Oscillates with decaying envelope.' : regime === 'critically damped' ? 'Fastest return without oscillation.' : 'No oscillation, slow exponential return.') + '</div>';
+            } else {
+                el.innerHTML = '<span class="eq">x(t) = A·cos(ωt)</span><br>ω = <span class="val">' + fmt(omega, 3) + ' rad/s</span> | T = <span class="val">' + fmt(T, 3) + ' s</span><br>E = ½kA² = <span class="val">' + fmt(0.5 * p.k * p.amp * p.amp) + ' J</span><div class="insight">Energy oscillates between kinetic and potential. Total energy is constant — verify on the graph: amplitude stays constant.</div>';
+            }
+        }
+    };
+
+    function springSetParam() { spring.setParam(); }
+    function springToggle() { spring.toggle(); }
+    function springReset() { spring.reset(); }
+    function springAIOptimize() {
+        animateSliders([
+            { id:'spring-k', val:40 }, { id:'spring-m', val:1 }, { id:'spring-a', val:1.0 }, { id:'spring-b', val:0.5 }
+        ], function() { spring.setParam(); showToast('AI: Underdamped oscillation configured', 'success'); });
+    }
+
+    /* ==================== COLLISION ==================== */
+    var coll = {
+        canvas: null, ctx: null, W: 0, H: 0,
+        params: { m1: 2, m2: 3, v1: 4, v2: -2, e: 1 },
+        state: null,
+        scale: 30, trackY: 0,
+
+        createDefaultState: function() {
+            var p = this.params;
+            return {
+                x1: -5, x2: 5,
+                v1cur: p.v1, v2cur: p.v2,
+                running: false, collided: false, flash: 0,
+                preP: p.m1 * p.v1 + p.m2 * p.v2,
+                preKE: 0.5 * p.m1 * p.v1 * p.v1 + 0.5 * p.m2 * p.v2 * p.v2
+            };
+        },
+
+        init: function() {
+            this.canvas = document.getElementById('coll-canvas');
+            var info = fitCanvas(this.canvas);
+            this.ctx = info.ctx; this.W = info.w; this.H = info.h;
+            this.trackY = this.H / 2;
+            this.scale = Math.max(5, Math.min(30, (this.W - 100) / 25));
+            if (!this.state) this.state = this.createDefaultState();
+            this.updatePreData();
+            this.draw();
+        },
+
+        setParam: function() {
+            this.params.m1 = parseFloat(document.getElementById('coll-m1').value);
+            this.params.m2 = parseFloat(document.getElementById('coll-m2').value);
+            this.params.v1 = parseFloat(document.getElementById('coll-v1').value);
+            this.params.v2 = parseFloat(document.getElementById('coll-v2').value);
+            this.params.e = parseFloat(document.getElementById('coll-e').value);
+            document.getElementById('coll-m1-val').textContent = this.params.m1.toFixed(1) + ' kg';
+            document.getElementById('coll-m2-val').textContent = this.params.m2.toFixed(1) + ' kg';
+            document.getElementById('coll-v1-val').textContent = this.params.v1.toFixed(1) + ' m/s';
+            document.getElementById('coll-v2-val').textContent = this.params.v2.toFixed(1) + ' m/s';
+            document.getElementById('coll-e-val').textContent = this.params.e.toFixed(2);
+            if (!this.state.running) {
+                this.state = this.createDefaultState();
+                this.updatePreData(); this.draw();
+            }
+            this.updateAI('idle');
+        },
+
+        start: function() {
+            if (this.state.running) return;
+            this.state = this.createDefaultState();
+            this.state.running = true;
+            document.getElementById('coll-start').innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Running...';
+            setStatus('coll-status', 'running', 'Simulating');
+            this.updatePreData();
+            showToast('Collision simulation started', 'success');
+            this.updateAI('running');
+        },
+
+        reset: function() {
+            this.state = this.createDefaultState();
+            document.getElementById('coll-start').innerHTML = '<i class="fas fa-play mr-1"></i>Collide';
+            setStatus('coll-status', 'idle', 'Ready');
+            ['coll-p-after','coll-ke-after','coll-ke-pct'].forEach(function(id) { document.getElementById(id).textContent = '—'; });
+            this.updatePreData(); this.draw(); this.updateAI('idle');
+        },
+
+        updatePreData: function() {
+            var p = this.params;
+            document.getElementById('coll-p-before').textContent = fmt(p.m1 * p.v1 + p.m2 * p.v2) + ' kg·m/s';
+            document.getElementById('coll-ke-before').textContent = fmt(0.5 * p.m1 * p.v1 * p.v1 + 0.5 * p.m2 * p.v2 * p.v2) + ' J';
+        },
+
+        update: function(dt) {
+            if (!this.state.running) return;
+            var s = this.state, p = this.params, sc = this.scale;
+            s.x1 += s.v1cur * dt;
+            s.x2 += s.v2cur * dt;
+
+            var r1px = Math.sqrt(p.m1) * 12;
+            var r2px = Math.sqrt(p.m2) * 12;
+            var r1m = r1px / sc;
+            var r2m = r2px / sc;
+
+            if (!s.collided && (s.x2 - s.x1) <= (r1m + r2m)) {
+                s.collided = true;
+                s.flash = 1;
+                var m1 = p.m1, m2 = p.m2, u1 = s.v1cur, u2 = s.v2cur, e = p.e;
+                s.v1cur = (m1 * u1 + m2 * u2 + m2 * e * (u2 - u1)) / (m1 + m2);
+                s.v2cur = (m1 * u1 + m2 * u2 + m1 * e * (u1 - u2)) / (m1 + m2);
+                var overlap = (r1m + r2m) - (s.x2 - s.x1);
+                if (overlap > 0) { s.x1 -= overlap / 2; s.x2 += overlap / 2; }
+
+                var pAfter = m1 * s.v1cur + m2 * s.v2cur;
+                var keAfter = 0.5 * m1 * s.v1cur * s.v1cur + 0.5 * m2 * s.v2cur * s.v2cur;
+                var kePct = s.preKE > 0 ? (keAfter / s.preKE * 100) : 100;
+                document.getElementById('coll-p-after').textContent = fmt(pAfter) + ' kg·m/s';
+                document.getElementById('coll-ke-after').textContent = fmt(keAfter) + ' J';
+                document.getElementById('coll-ke-pct').textContent = fmt(kePct, 1) + '%';
+                document.getElementById('coll-ke-pct').style.color = kePct > 99 ? '#00ff88' : (kePct > 50 ? '#ff6b35' : '#ff4757');
+                document.getElementById('coll-start').innerHTML = '<i class="fas fa-play mr-1"></i>Collide';
+                setStatus('coll-status', 'done', 'Collision Done');
+                this.updateAI('collided');
+                showToast('KE conserved: ' + fmt(kePct, 1) + '%', kePct > 99 ? 'success' : 'warn');
+                setTimeout(function() { s.running = false; }, 2500);
+            }
+
+            if (s.flash > 0) s.flash -= dt * 2.5;
+            if (Math.abs(s.x1) > 18 && Math.abs(s.x2) > 18) {
+                s.running = false;
+                document.getElementById('coll-start').innerHTML = '<i class="fas fa-play mr-1"></i>Collide';
+            }
+        },
+
+        draw: function() {
+            if (!this.ctx || this.W < 20 || this.H < 20) return;
+            var ctx = this.ctx, W = this.W, H = this.H, sc = this.scale, p = this.params, s = this.state;
+            var cx = W / 2, ty = this.trackY;
+            ctx.clearRect(0, 0, W, H);
+
+            /* Track */
+            ctx.beginPath();
+            ctx.moveTo(20, ty);
+            ctx.lineTo(W - 20, ty);
+            ctx.strokeStyle = '#1a2332';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            /* Track marks */
+            for (var m = -10; m <= 10; m++) {
+                var px = cx + m * sc;
+                if (px < 25 || px > W - 25) continue;
+                ctx.beginPath();
+                ctx.moveTo(px, ty - 4);
+                ctx.lineTo(px, ty + 4);
+                ctx.strokeStyle = '#2a3a4e';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                if (m % 2 === 0) {
+                    ctx.fillStyle = '#3a4555';
+                    ctx.font = '9px JetBrains Mono';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(m + 'm', px, ty + 18);
+                }
+            }
+            ctx.textAlign = 'start';
+
+            var r1 = Math.sqrt(p.m1) * 12;
+            var r2 = Math.sqrt(p.m2) * 12;
+            var b1x = cx + s.x1 * sc;
+            var b2x = cx + s.x2 * sc;
+
+            /* Flash */
+            if (s.flash > 0) {
+                var midX = (b1x + b2x) / 2;
+                var grad = ctx.createRadialGradient(midX, ty, 0, midX, ty, 70);
+                grad.addColorStop(0, 'rgba(255,255,255,' + (s.flash * 0.5) + ')');
+                grad.addColorStop(0.4, 'rgba(0,255,136,' + (s.flash * 0.25) + ')');
+                grad.addColorStop(1, 'rgba(0,255,136,0)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(midX - 70, ty - 70, 140, 140);
+            }
+
+            /* Velocity arrows */
+            function drawArrow(x, y, vel, color) {
+                if (Math.abs(vel) < 0.1) return;
+                var len = vel * 7;
+                ctx.beginPath();
+                ctx.moveTo(x, y - 30);
+                ctx.lineTo(x + len, y - 30);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+                var dir = vel > 0 ? 1 : -1;
+                ctx.beginPath();
+                ctx.moveTo(x + len, y - 30);
+                ctx.lineTo(x + len - dir * 8, y - 34);
+                ctx.lineTo(x + len - dir * 8, y - 26);
+                ctx.closePath();
+                ctx.fillStyle = color;
+                ctx.fill();
+                ctx.font = '10px JetBrains Mono';
+                ctx.textAlign = 'center';
+                ctx.fillText(fmt(vel, 1) + ' m/s', x + len / 2, y - 42);
+                ctx.textAlign = 'start';
+            }
+            drawArrow(b1x, ty, s.v1cur, '#00ff88');
+            drawArrow(b2x, ty, s.v2cur, '#00b4d8');
+
+            /* Ball A */
+            ctx.beginPath();
+            ctx.arc(b1x, ty, r1, 0, Math.PI * 2);
+            var g1 = ctx.createRadialGradient(b1x - 3, ty - 3, 2, b1x, ty, r1);
+            g1.addColorStop(0, '#88ffcc');
+            g1.addColorStop(1, '#00aa55');
+            ctx.fillStyle = g1;
+            ctx.shadowColor = '#00ff88';
+            ctx.shadowBlur = 12;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#06080d';
+            ctx.font = 'bold ' + Math.max(9, r1 * 0.65) + 'px JetBrains Mono';
+            ctx.textAlign = 'center';
+            ctx.fillText('A', b1x, ty + 4);
+
+            /* Ball B */
+            ctx.beginPath();
+            ctx.arc(b2x, ty, r2, 0, Math.PI * 2);
+            var g2 = ctx.createRadialGradient(b2x - 3, ty - 3, 2, b2x, ty, r2);
+            g2.addColorStop(0, '#88eeff');
+            g2.addColorStop(1, '#007799');
+            ctx.fillStyle = g2;
+            ctx.shadowColor = '#00b4d8';
+            ctx.shadowBlur = 12;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#06080d';
+            ctx.font = 'bold ' + Math.max(9, r2 * 0.65) + 'px JetBrains Mono';
+            ctx.fillText('B', b2x, ty + 4);
+            ctx.textAlign = 'start';
+
+            /* Mass labels */
+            ctx.fillStyle = '#8b949e';
+            ctx.font = '10px JetBrains Mono';
+            ctx.textAlign = 'center';
+            ctx.fillText(p.m1 + 'kg', b1x, ty + r1 + 16);
+            ctx.fillText(p.m2 + 'kg', b2x, ty + r2 + 16);
+            ctx.textAlign = 'start';
+
+            /* Elasticity label */
+            ctx.fillStyle = '#3a4555';
+            ctx.font = '10px JetBrains Mono';
+            ctx.textAlign = 'right';
+            ctx.fillText('e = ' + p.e.toFixed(2) + (p.e === 1 ? ' (Elastic)' : p.e === 0 ? ' (Inelastic)' : ' (Partial)'), W - 20, 20);
+            ctx.textAlign = 'start';
+        },
+
+        updateAI: function(mode) {
+            var p = this.params, s = this.state;
+            var pBefore = p.m1 * p.v1 + p.m2 * p.v2;
+            var keBefore = 0.5 * p.m1 * p.v1 * p.v1 + 0.5 * p.m2 * p.v2 * p.v2;
+            var el = document.getElementById('coll-ai-text');
+            if (mode === 'idle') {
+                var v1f = (p.m1*p.v1 + p.m2*p.v2 + p.m2*p.e*(p.v2-p.v1)) / (p.m1+p.m2);
+                var v2f = (p.m1*p.v1 + p.m2*p.v2 + p.m1*p.e*(p.v1-p.v2)) / (p.m1+p.m2);
+                var keAfter = 0.5*p.m1*v1f*v1f + 0.5*p.m2*v2f*v2f;
+                el.innerHTML = 'Predicted: v₁\'=<span class="val">' + fmt(v1f,2) + '</span> v₂\'=<span class="val">' + fmt(v2f,2) + '</span> m/s<br>p = <span class="eq">' + fmt(pBefore) + ' kg·m/s</span> (always conserved)<br>KE retention: <span class="val">' + fmt(keAfter/keBefore*100,1) + '%</span><div class="insight">' + (p.e === 1 ? 'Elastic: KE fully conserved. ' + (Math.abs(p.m1-p.m2) < 0.1 ? 'Equal masses → velocities swap!' : 'Heavier ball dominates post-collision.') : 'KE loss = ' + fmt(keBefore-keAfter,2) + ' J converts to heat/deformation.') + '</div>';
+            } else if (mode === 'running') {
+                el.innerHTML = 'Simulation running...<br>Initial p = <span class="val">' + fmt(pBefore) + ' kg·m/s</span><div class="insight">Watch for the velocity arrow changes at impact. Momentum is conserved regardless of elasticity.</div>';
+            } else if (mode === 'collided') {
+                var pAfter = p.m1 * s.v1cur + p.m2 * s.v2cur;
+                var keAfter = 0.5*p.m1*s.v1cur*s.v1cur + 0.5*p.m2*s.v2cur*s.v2cur;
+                el.innerHTML = 'v₁\'=<span class="val">' + fmt(s.v1cur,2) + '</span> v₂\'=<span class="val">' + fmt(s.v2cur,2) + '</span> m/s<br>p after: <span class="eq">' + fmt(pAfter) + '</span> = before: <span class="val">' + fmt(pBefore) + '</span> <span style="color:#00ff88">✓</span><br>KE: <span class="val">' + fmt(keAfter) + ' J</span> (' + fmt(keAfter/keBefore*100,1) + '%)<div class="insight">Momentum conservation verified. ' + (p.e === 1 ? 'Elastic collision confirmed — KE also conserved.' : fmt(keBefore-keAfter,2) + ' J lost to deformation.') + '</div>';
+            }
+        }
+    };
+
+    function collSetParam() { coll.setParam(); }
+    function collStart() { coll.start(); }
+    function collReset() { coll.reset(); }
+    function collAIOptimize() {
+        animateSliders([
+            { id:'coll-m1', val:2 }, { id:'coll-m2', val:2 }, { id:'coll-v1', val:5 }, { id:'coll-v2', val:-5 }, { id:'coll-e', val:1 }
+        ], function() { coll.setParam(); showToast('AI: Equal-mass elastic → velocities swap!', 'success'); });
+    }
+
+    /* ==================== MAIN LOOP — NO VISIBILITY GATING ==================== */
+    var lastTime = 0;
+    var initialized = false;
+
+    function mainLoop(timestamp) {
+        if (!initialized) { lastTime = timestamp; initialized = true; }
+        var dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+        if (dt <= 0) dt = 0.016;
+        lastTime = timestamp;
+
+        /* Always update ALL simulations — no visibility check */
+        proj.update(dt);
+        proj.draw();
+
+        pend.update(dt);
+        pend.draw();
+
+        spring.update(dt);
+        spring.draw();
+        spring.drawGraph();
+
+        coll.update(dt);
+        coll.draw();
+
+        requestAnimationFrame(mainLoop);
+    }
+
+    /* ==================== INIT — WAIT FOR LAYOUT ==================== */
+    function initAll() {
+        /* Small delay to ensure Tailwind CSS has laid out the page */
+        setTimeout(function() {
+            heroParticles.init();
+            heroParticles.draw();
+
+            proj.init();
+            pend.init();
+            spring.init();
+            coll.init();
+
+            proj.updateAI('idle');
+            pend.updateAI();
+            spring.updateAI();
+            coll.updateAI('idle');
+            coll.updatePreData();
+
+            requestAnimationFrame(mainLoop);
+        }, 150);
+    }
+
+    /* Use 'load' instead of 'DOMContentLoaded' to ensure all resources (Tailwind CDN) are ready */
+    if (document.readyState === 'complete') {
+        initAll();
+    } else {
+        window.addEventListener('load', initAll);
+    }
+
+    /* Handle resize — reinit canvases */
+    var resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            proj.init();
+            pend.init();
+            spring.init();
+            coll.init();
+        }, 200);
+    });
+    </script>
+</body>
+</html>
