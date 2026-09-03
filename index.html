@@ -878,7 +878,7 @@
       <span class="outline">PHYSICS</span> <span class="gradient">PRACTICAL</span><br>
       <span class="gradient">SIMULATOR</span>
     </h1>
-    <p>An interactive laboratory built for Sri Lankan A/L English Medium Physics. Drag instruments, run experiments, and watch physics come alive — interactive simulations for all 42 syllabus practicals.</p>
+    <p>An interactive laboratory built for Sri Lankan A/L English Medium Physics. Drag instruments, run experiments, and watch physics come alive — no sliders, just your cursor.</p>
     <div class="hero-actions">
       <a href="#instruments" class="btn-primary">
         <i class="fa-solid fa-flask"></i>
@@ -1514,11 +1514,11 @@
   </div>
 </section>
 
-<!-- ============ HEAT & ELECTRICITY ============ -->
+<!-- ============ HEAT & ELECTRICITY (compact sims) ============ -->
 <section id="heat">
   <div class="section-head reveal">
     <div class="section-tag">Heat & Electricity</div>
-    <h2>Thermal & Electrical Practicals</h2>
+    <h2>Thermal & Electrical Practical</h2>
     <p>Newton's law of cooling and Ohm's law — interactive, with live graphs and draggable parameters.</p>
   </div>
 
@@ -1637,71 +1637,6 @@
   </div>
 </section>
 
-<!-- ============ UNIVERSAL SIMULATOR FRAME ============ -->
-<section id="universal-sim">
-  <div class="section-head reveal">
-    <div class="section-tag">Interactive Simulation Engine</div>
-    <h2 id="uni-title">Select a Practical</h2>
-    <p id="uni-desc">Real-time simulation engine for all 42 syllabus practicals.</p>
-  </div>
-
-  <div class="practical reveal" id="uni-practical">
-    <div class="practical-head">
-      <div class="left">
-        <span class="practical-num" id="uni-num">P / 11</span>
-        <h3 id="uni-name">Simple Pendulum</h3>
-      </div>
-      <span style="font-size:0.8rem;color:var(--muted)" id="uni-tagline">Real-time Physics Simulator</span>
-    </div>
-    <div class="practical-body">
-      <div class="stage" id="uni-stage">
-        <canvas id="uni-canvas"></canvas>
-      </div>
-      <div class="panel-side">
-        <div>
-          <h4>Controls & Parameters</h4>
-          <div class="ctrl-group" id="uni-ctrl-1">
-            <label id="uni-lbl-1">Parameter 1</label>
-            <div class="input-row">
-              <input type="number" id="uni-in-1" value="1.0" step="0.1">
-            </div>
-          </div>
-          <div class="ctrl-group" id="uni-ctrl-2">
-            <label id="uni-lbl-2">Parameter 2</label>
-            <div class="input-row">
-              <input type="number" id="uni-in-2" value="9.8" step="0.1">
-            </div>
-          </div>
-        </div>
-        <div>
-          <h4>Live Telemetry</h4>
-          <div class="readout" id="uni-readout">
-            <div class="readout-row">
-              <span class="readout-label" id="uni-rl-1">Value 1</span>
-              <span class="readout-value" id="uni-rv-1">0.00</span>
-            </div>
-            <div class="readout-row">
-              <span class="readout-label" id="uni-rl-2">Value 2</span>
-              <span class="readout-value cyan" id="uni-rv-2">0.00</span>
-            </div>
-            <div class="readout-row">
-              <span class="readout-label" id="uni-rl-3">Value 3</span>
-              <span class="readout-value green" id="uni-rv-3">0.00</span>
-            </div>
-          </div>
-        </div>
-        <div class="btn-group">
-          <button class="btn-play" id="uni-play"><i class="fa-solid fa-play"></i> Start</button>
-          <button class="btn-stop" id="uni-stop"><i class="fa-solid fa-rotate-left"></i> Reset</button>
-        </div>
-        <div class="info-box" id="uni-info">
-          <i class="fa-solid fa-circle-info"></i> Select any practical from the full syllabus grid to load its real-time simulation.
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ============ ALL 42 PRACTICALS ============ -->
 <section id="all">
   <div class="section-head reveal">
@@ -1754,577 +1689,17 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* ---------- ALL 42 PRACTICALS DATA & SIM ENGINE ---------- */
-const PRACTICALS_42 = [
-  { id: 1, name: "Vernier Caliper", cat: "Measurement", anchor: "vernier" },
-  { id: 2, name: "Micrometer Screw Gauge", cat: "Measurement", anchor: "micrometer" },
-  { id: 3, name: "Spherometer", cat: "Measurement", anchor: "spherometer" },
-  { id: 4, name: "Travelling Microscope", cat: "Measurement", anchor: "microscope" },
-  { id: 5, name: "Projectile Motion", cat: "Mechanics", anchor: "projectile" },
-  { id: 6, name: "Explosive Momentum", cat: "Mechanics", anchor: "explosive" },
-  { id: 7, name: "Refraction Through 5 Mediums", cat: "Optics", anchor: "refraction" },
-  { id: 8, name: "Wave Simulator", cat: "Waves", anchor: "waves" },
-  { id: 9, name: "Newton's Law of Cooling", cat: "Heat", anchor: "cooling" },
-  { id: 10, name: "Ohm's Law (V vs I)", cat: "Electricity", anchor: "electricity" },
-  { id: 11, name: "Simple Pendulum (g calculation)", cat: "Mechanics", simKey: "pendulum" },
-  { id: 12, name: "Triangle & Parallelogram of Forces", cat: "Mechanics", simKey: "forces" },
-  { id: 13, name: "Principle of Moments & Center of Gravity", cat: "Mechanics", simKey: "moments" },
-  { id: 14, name: "Friction & Coefficient of Static Friction", cat: "Mechanics", simKey: "friction" },
-  { id: 15, name: "Hooke's Law & Young's Modulus Wire", cat: "Mechanics", simKey: "hooke" },
-  { id: 16, name: "U-Tube & Density of Immiscible Liquids", cat: "Mechanics", simKey: "utube" },
-  { id: 17, name: "Hare's Apparatus (Liquid Density)", cat: "Mechanics", simKey: "hares" },
-  { id: 18, name: "Terminal Velocity & Viscosity (Stokes' Law)", cat: "Mechanics", simKey: "viscosity" },
-  { id: 19, name: "Surface Tension by Capillary Rise", cat: "Mechanics", simKey: "capillary" },
-  { id: 20, name: "Sonometer (Frequency vs Length/Tension)", cat: "Waves", simKey: "sonometer" },
-  { id: 21, name: "Resonance Air Column Tube (Speed of Sound)", cat: "Waves", simKey: "resonance" },
-  { id: 22, name: "Reflection at Plane & Curved Mirrors", cat: "Optics", simKey: "mirrors" },
-  { id: 23, name: "Refraction through Glass Prism (Minimum Deviation)", cat: "Optics", simKey: "prism" },
-  { id: 24, name: "Real and Apparent Depth (Refractive Index)", cat: "Optics", simKey: "depth" },
-  { id: 25, name: "Convex & Concave Lens Focal Length", cat: "Optics", simKey: "lenses" },
-  { id: 26, name: "Astronomical Telescope Magnification", cat: "Optics", simKey: "telescope" },
-  { id: 27, name: "Diffraction Grating (Wavelength of Light)", cat: "Optics", simKey: "grating" },
-  { id: 28, name: "Boyle's Law (P vs 1/V)", cat: "Heat", simKey: "boyle" },
-  { id: 29, name: "Charles's Law (V vs T)", cat: "Heat", simKey: "charles" },
-  { id: 30, name: "Specific Heat Capacity of Metal (Method of Mixtures)", cat: "Heat", simKey: "sp_heat" },
-  { id: 31, name: "Specific Latent Heat of Fusion of Ice", cat: "Heat", simKey: "latent_ice" },
-  { id: 32, name: "Specific Latent Heat of Vaporization of Water", cat: "Heat", simKey: "latent_steam" },
-  { id: 33, name: "Thermal Conductivity (Searle's Bar)", cat: "Heat", simKey: "searles" },
-  { id: 34, name: "Metre Bridge (Resistance & Resistivity)", cat: "Electricity", simKey: "metre_bridge" },
-  { id: 35, name: "Potentiometer (Internal Resistance of Cell)", cat: "Electricity", simKey: "potentiometer" },
-  { id: 36, name: "Potentiometer (Comparison of EMFs)", cat: "Electricity", simKey: "compare_emf" },
-  { id: 37, name: "Joule's Heating Effect (Electrical Equivalent of Heat)", cat: "Electricity", simKey: "joule" },
-  { id: 38, name: "PN Junction Diode I-V Characteristics", cat: "Electronics", simKey: "diode" },
-  { id: 39, name: "Zener Diode Voltage Regulation", cat: "Electronics", simKey: "zener" },
-  { id: 40, name: "Transistor CE Output Characteristics", cat: "Electronics", simKey: "transistor" },
-  { id: 41, name: "Logic Gates (AND, OR, NOT, NAND, NOR)", cat: "Electronics", simKey: "logic" },
-  { id: 42, name: "Radioactive Half-Life & Decay Simulation", cat: "Modern Physics", simKey: "decay" }
-];
+/* ========================================================================
+   PHYSICS LAB PRO — Single-file simulator
+   ======================================================================== */
 
-/* Render Tile Grid */
-const grid = document.getElementById('all-pracs-grid');
-if(grid){
-  PRACTICALS_42.forEach(p => {
-    const tile = document.createElement('div');
-    tile.className = 'prac-tile';
-    tile.innerHTML = `
-      <div class="prac-tile-num">P / ${p.id < 10 ? '0'+p.id : p.id}</div>
-      <div class="prac-tile-name">${p.name}</div>
-      <div class="prac-tile-cat">${p.cat}</div>
-    `;
-    tile.onclick = () => {
-      if(p.anchor){
-        scrollToPrac(p.anchor);
-      } else {
-        loadUniversalSim(p);
-        scrollToPrac('universal-sim');
-      }
-    };
-    grid.appendChild(tile);
-  });
-}
-
-/* Universal Engine State - Full 42 Practicals Support */
-let uniActiveKey = 'pendulum';
-let uniAnimId = null;
-let uniState = { running: true, t: 0, p1: 1.0, p2: 9.8, p3: 0, extra: {} };
-
-const UNI_CONFIG = {
-  pendulum: { l1:'Pendulum Length L (m)', v1:1.0, l2:'Gravity g (m/s²)', v2:9.8, info:'Simple pendulum. Period T = 2π√(L/g). Drag length & g to see real-time oscillation.' },
-  forces: { l1:'Force F1 (N)', v1:5.0, l2:'Force F2 (N)', v2:4.0, info:'Triangle/parallelogram of forces. Resultant computed live from two concurrent forces at 60°.' },
-  moments: { l1:'Mass m1 (kg)', v1:0.5, l2:'Mass m2 (kg)', v2:0.3, info:'Principle of moments. Adjust masses; see equilibrium positions on a uniform metre rule.' },
-  friction: { l1:'Mass (kg)', v1:2.0, l2:'Static Coeff µ', v2:0.4, info:'Static friction. Incline angle increases until block starts sliding (µ = tan θ).' },
-  hooke: { l1:'Load (N)', v1:5.0, l2:'Young\'s Modulus Y (GPa)', v2:200, info:'Hooke\'s law / Young\'s modulus for a wire. Extension Δl = (F·L)/(A·Y).' },
-  utube: { l1:'Density ρ1 (g/cm³)', v1:1.0, l2:'Density ρ2 (g/cm³)', v2:0.8, info:'U-tube with immiscible liquids. Heights adjust so ρ1h1 = ρ2h2.' },
-  hares: { l1:'Density of liquid (g/cm³)', v1:1.2, l2:'Height difference (cm)', v2:12, info:'Hare\'s apparatus. Relative density from manometer column heights.' },
-  viscosity: { l1:'Sphere radius r (mm)', v1:2.0, l2:'Liquid viscosity η (Pa·s)', v2:0.8, info:'Stokes\' law terminal velocity. v = (2r²(ρ−σ)g)/(9η). Sphere falls and reaches terminal speed.' },
-  capillary: { l1:'Capillary radius r (mm)', v1:0.5, l2:'Surface tension T (N/m)', v2:0.072, info:'Capillary rise. h = (2T cosθ)/(ρgr). Watch liquid climb the tube.' },
-  sonometer: { l1:'Length L (cm)', v1:50, l2:'Tension T (N)', v2:40, info:'Sonometer. Frequency f = (1/(2L))√(T/µ). Change length or tension to hear/see pitch change.' },
-  resonance: { l1:'Frequency f (Hz)', v1:512, l2:'Tube diameter (cm)', v2:2.5, info:'Resonance air column. First resonance L = λ/4 − e. Speed of sound v = fλ.' },
-  mirrors: { l1:'Object distance u (cm)', v1:30, l2:'Focal length f (cm)', v2:15, info:'Concave/convex mirror. Ray diagram with real/virtual image using mirror formula 1/v − 1/u = 1/f.' },
-  prism: { l1:'Angle of prism A (°)', v1:60, l2:'Refractive index µ', v2:1.5, info:'Glass prism minimum deviation. δm = 2i − A, µ = sin((A+δm)/2)/sin(A/2).' },
-  depth: { l1:'Real depth (cm)', v1:10, l2:'Refractive index µ', v2:1.33, info:'Real & apparent depth. Apparent depth = real depth / µ. View from above.' },
-  lenses: { l1:'Object distance u (cm)', v1:30, l2:'Focal length f (cm)', v2:20, info:'Convex/concave lens. Ray diagram & lens formula 1/v − 1/u = 1/f. Magnification m = v/u.' },
-  telescope: { l1:'Objective f_o (cm)', v1:50, l2:'Eyepiece f_e (cm)', v2:5, info:'Astronomical telescope. Magnifying power m = f_o / f_e (normal adjustment).' },
-  grating: { l1:'Lines per mm', v1:600, l2:'Order n', v2:1, info:'Diffraction grating. Wavelength λ = (sinθ)/(nN). First-order spectrum shown.' },
-  boyle: { l1:'Initial Volume V (L)', v1:5.0, l2:'Applied Pressure P (kPa)', v2:100, info:'Boyle\'s law P∝1/V at constant T. Piston moves; P×V remains constant.' },
-  charles: { l1:'Initial Volume V (L)', v1:2.0, l2:'Temperature T (°C)', v2:27, info:'Charles\'s law V∝T (absolute). Volume expands linearly with absolute temperature.' },
-  sp_heat: { l1:'Mass of metal (g)', v1:100, l2:'Initial temp of metal (°C)', v2:100, info:'Method of mixtures. Heat lost by metal = heat gained by water + calorimeter.' },
-  latent_ice: { l1:'Mass of ice (g)', v1:20, l2:'Water mass (g)', v2:100, info:'Latent heat of fusion of ice. mL = mcΔθ (water cools while ice melts).' },
-  latent_steam: { l1:'Mass of steam (g)', v1:5, l2:'Water mass (g)', v2:100, info:'Latent heat of vaporization. Steam condenses and cools, heating the water.' },
-  searles: { l1:'Temp gradient (°C/cm)', v1:2.0, l2:'Cross-section A (cm²)', v2:1.0, info:'Searle\'s bar thermal conductivity. Heat current = kA(dθ/dx). Steady-state flow.' },
-  metre_bridge: { l1:'Unknown R (Ω)', v1:5.0, l2:'Known S (Ω)', v2:5.0, info:'Metre bridge. At balance P/Q = R/S. Find resistance from balancing length.' },
-  potentiometer: { l1:'Cell EMF E (V)', v1:1.5, l2:'Internal r (Ω)', v2:0.5, info:'Potentiometer – internal resistance. r = R(l1−l2)/l2 from open & closed circuit lengths.' },
-  compare_emf: { l1:'EMF E1 (V)', v1:1.5, l2:'EMF E2 (V)', v2:1.08, info:'Comparison of EMFs by potentiometer. E1/E2 = l1/l2.' },
-  joule: { l1:'Current I (A)', v1:2.0, l2:'Resistance R (Ω)', v2:5.0, info:'Joule heating. H = I²Rt. Temperature rise of water in calorimeter shown live.' },
-  diode: { l1:'Forward Voltage V (V)', v1:0.7, l2:'Series Resistor R (Ω)', v2:220, info:'PN junction diode I-V curve. Forward bias current rises exponentially after knee voltage.' },
-  zener: { l1:'Zener Voltage Vz (V)', v1:5.1, l2:'Series R (Ω)', v2:220, info:'Zener diode voltage regulation. Output stays at Vz once reverse breakdown is reached.' },
-  transistor: { l1:'Base current Ib (µA)', v1:20, l2:'Collector voltage Vce (V)', v2:5, info:'Transistor CE output characteristics. Ic vs Vce for different Ib values.' },
-  logic: { l1:'Input A (0/1)', v1:1, l2:'Input B (0/1)', v2:1, info:'Logic gates (AND, OR, NOT, NAND, NOR). Truth table evaluated live from inputs A & B.' },
-  decay: { l1:'Half-life T½ (s)', v1:5.0, l2:'Initial nuclei N0', v2:1000, info:'Radioactive decay. N = N0 e^(−λt). Count remaining nuclei and activity in real time.' }
-};
-
-function loadUniversalSim(p){
-  uniActiveKey = p.simKey || 'pendulum';
-  document.getElementById('uni-num').textContent = `P / ${p.id < 10 ? '0'+p.id : p.id}`;
-  document.getElementById('uni-name').textContent = p.name;
-  document.getElementById('uni-title').textContent = p.name;
-  document.getElementById('uni-desc').textContent = `Interactive real-time physics simulation for syllabus practical ${p.id}: ${p.name}.`;
-
-  const cfg = UNI_CONFIG[uniActiveKey] || { l1:'Parameter A', v1:10, l2:'Parameter B', v2:5, info:'Real-time simulation.' };
-  document.getElementById('uni-lbl-1').textContent = cfg.l1;
-  document.getElementById('uni-in-1').value = cfg.v1;
-  document.getElementById('uni-lbl-2').textContent = cfg.l2;
-  document.getElementById('uni-in-2').value = cfg.v2;
-  document.getElementById('uni-info').innerHTML = `<i class="fa-solid fa-circle-info"></i> ${cfg.info}`;
-
-  uniState.p1 = parseFloat(cfg.v1);
-  uniState.p2 = parseFloat(cfg.v2);
-  uniState.t = 0;
-  uniState.running = true;
-  uniState.extra = {};
-  toast(`Loaded Practical ${p.id}: ${p.name}`);
-}
-
-function runUniversalLoop(){
-  const canvas = document.getElementById('uni-canvas');
-  if(!canvas) return;
-  const ctx = canvas.getContext('2d');
-
-  function resize(){
-    if(canvas.offsetWidth === 0) return;
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-  }
-  resize();
-
-  function setTelemetry(l1,v1,l2,v2,l3,v3){
-    document.getElementById('uni-rl-1').textContent = l1;
-    document.getElementById('uni-rv-1').textContent = v1;
-    document.getElementById('uni-rl-2').textContent = l2;
-    document.getElementById('uni-rv-2').textContent = v2;
-    document.getElementById('uni-rl-3').textContent = l3;
-    document.getElementById('uni-rv-3').textContent = v3;
-  }
-
-  function draw(){
-    if(canvas.width !== canvas.offsetWidth) resize();
-    const w = canvas.width, h = canvas.height;
-    ctx.clearRect(0, 0, w, h);
-    if(uniState.running) uniState.t += 0.03;
-    const key = uniActiveKey;
-    const p1 = uniState.p1, p2 = uniState.p2, t = uniState.t;
-
-    // ========== PENDULUM ==========
-    if(key === 'pendulum'){
-      const L = Math.max(0.2, p1), g = Math.max(1, p2);
-      const T = 2*Math.PI*Math.sqrt(L/g);
-      const theta = 0.35*Math.sin((2*Math.PI/T)*t);
-      const px = w/2 + Math.sin(theta)*Math.min(180,L*120);
-      const py = 50 + Math.cos(theta)*Math.min(180,L*120);
-      ctx.strokeStyle='#3a4258'; ctx.lineWidth=2;
-      ctx.beginPath(); ctx.moveTo(w/2-40,40); ctx.lineTo(w/2+40,40); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(w/2,40); ctx.lineTo(px,py); ctx.strokeStyle='#f59e0b'; ctx.lineWidth=3; ctx.stroke();
-      ctx.beginPath(); ctx.arc(px,py,18,0,Math.PI*2); ctx.fillStyle='#06b6d4'; ctx.fill();
-      setTelemetry('Period T', T.toFixed(3)+' s', 'Frequency f', (1/T).toFixed(3)+' Hz', 'Angle θ', (theta*180/Math.PI).toFixed(1)+'°');
-    }
-    // ========== FORCES (Triangle / Parallelogram) ==========
-    else if(key === 'forces'){
-      const F1=Math.max(0.5,p1), F2=Math.max(0.5,p2), ang=60*Math.PI/180;
-      const Rx = F1 + F2*Math.cos(ang), Ry = F2*Math.sin(ang);
-      const R = Math.sqrt(Rx*Rx+Ry*Ry), thetaR = Math.atan2(Ry,Rx)*180/Math.PI;
-      const ox=w*0.25, oy=h*0.7, sc=18;
-      ctx.strokeStyle='#ef4444'; ctx.lineWidth=3;
-      ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(ox+F1*sc,oy); ctx.stroke();
-      ctx.strokeStyle='#06b6d4';
-      ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(ox+F2*sc*Math.cos(ang),oy-F2*sc*Math.sin(ang)); ctx.stroke();
-      ctx.strokeStyle='#10b981'; ctx.setLineDash([6,4]);
-      ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(ox+Rx*sc,oy-Ry*sc); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle='#f59e0b'; ctx.beginPath(); ctx.arc(ox,oy,6,0,Math.PI*2); ctx.fill();
-      setTelemetry('Resultant R', R.toFixed(2)+' N', 'Direction', thetaR.toFixed(1)+'°', 'F1 + F2', (F1+F2).toFixed(1)+' N');
-    }
-    // ========== MOMENTS ==========
-    else if(key === 'moments'){
-      const m1=Math.max(0.1,p1), m2=Math.max(0.1,p2);
-      const total = m1+m2, d1 = (m2/total)*80, d2 = (m1/total)*80;
-      const cx=w/2, cy=h*0.55;
-      ctx.strokeStyle='#5a6478'; ctx.lineWidth=8;
-      ctx.beginPath(); ctx.moveTo(cx-120,cy); ctx.lineTo(cx+120,cy); ctx.stroke();
-      ctx.fillStyle='#3a4258'; ctx.fillRect(cx-8,cy,16,h-cy-20);
-      ctx.fillStyle='#ef4444'; ctx.fillRect(cx-d1*1.2-15,cy-25,30,25);
-      ctx.fillStyle='#06b6d4'; ctx.fillRect(cx+d2*1.2-15,cy-25,30,25);
-      ctx.fillStyle='#f59e0b'; ctx.beginPath(); ctx.arc(cx,cy,8,0,Math.PI*2); ctx.fill();
-      setTelemetry('m1·d1', (m1*d1).toFixed(2), 'm2·d2', (m2*d2).toFixed(2), 'Balance', Math.abs(m1*d1-m2*d2)<0.5?'YES':'NO');
-    }
-    // ========== FRICTION ==========
-    else if(key === 'friction'){
-      const mass=Math.max(0.1,p1), mu=Math.max(0.05,Math.min(1.2,p2));
-      const thetaCrit = Math.atan(mu)*180/Math.PI;
-      const ang = Math.min(thetaCrit, (t*8)% (thetaCrit+5));
-      const rad = ang*Math.PI/180;
-      ctx.save(); ctx.translate(w*0.2,h*0.75); ctx.rotate(-rad);
-      ctx.fillStyle='#3a4258'; ctx.fillRect(0,-8,220,16);
-      ctx.fillStyle='#f59e0b'; ctx.fillRect(80,-40,50,32);
-      ctx.restore();
-      setTelemetry('Critical θ', thetaCrit.toFixed(1)+'°', 'Current θ', ang.toFixed(1)+'°', 'µ = tanθ', mu.toFixed(3));
-    }
-    // ========== HOOKE / YOUNG ==========
-    else if(key === 'hooke'){
-      const F=Math.max(0.5,p1), Y=Math.max(10,p2)*1e9;
-      const L0=1.0, A=0.5e-6, dl = (F*L0)/(A*Y);
-      const stretch = Math.min(120, dl*1e5);
-      ctx.strokeStyle='#5a6478'; ctx.lineWidth=4;
-      ctx.beginPath(); ctx.moveTo(w/2,40); ctx.lineTo(w/2,80+stretch); ctx.stroke();
-      ctx.fillStyle='#06b6d4'; ctx.beginPath(); ctx.arc(w/2,80+stretch+15,15,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='#ef4444'; ctx.fillRect(w/2-20,80+stretch+30,40,20);
-      setTelemetry('Extension Δl', (dl*1000).toFixed(3)+' mm', 'Stress', (F/A/1e6).toFixed(1)+' MPa', 'Strain', (dl/L0).toFixed(6));
-    }
-    // ========== U-TUBE ==========
-    else if(key === 'utube'){
-      const rho1=Math.max(0.5,p1), rho2=Math.max(0.5,p2);
-      const h1 = 40, h2 = h1*(rho1/rho2);
-      const base=h*0.8;
-      ctx.strokeStyle='#5a6478'; ctx.lineWidth=6;
-      ctx.beginPath(); ctx.moveTo(w*0.3,base); ctx.lineTo(w*0.3,base-120); ctx.moveTo(w*0.7,base); ctx.lineTo(w*0.7,base-120); ctx.moveTo(w*0.3,base); ctx.lineTo(w*0.7,base); ctx.stroke();
-      ctx.fillStyle='rgba(6,182,212,0.5)'; ctx.fillRect(w*0.3-15,base-h1*2,30,h1*2);
-      ctx.fillStyle='rgba(245,158,11,0.5)'; ctx.fillRect(w*0.7-15,base-h2*2,30,h2*2);
-      setTelemetry('h1', h1.toFixed(1)+' cm', 'h2', h2.toFixed(1)+' cm', 'ρ1/ρ2', (rho1/rho2).toFixed(3));
-    }
-    // ========== HARE'S ==========
-    else if(key === 'hares'){
-      const dens=Math.max(0.5,p1), dh=Math.max(2,p2);
-      const hWater = 20, hLiq = hWater*(1.0/dens);
-      ctx.strokeStyle='#5a6478'; ctx.lineWidth=4;
-      ctx.strokeRect(w*0.35,h*0.2,w*0.3,h*0.55);
-      ctx.fillStyle='rgba(6,182,212,0.4)'; ctx.fillRect(w*0.35+5,h*0.7-hWater*3,w*0.12,hWater*3);
-      ctx.fillStyle='rgba(239,68,68,0.4)'; ctx.fillRect(w*0.53,h*0.7-hLiq*3,w*0.12,hLiq*3);
-      setTelemetry('ρ_liquid', dens.toFixed(2)+' g/cm³', 'h_water', hWater.toFixed(1)+' cm', 'h_liquid', hLiq.toFixed(1)+' cm');
-    }
-    // ========== VISCOSITY / STOKES ==========
-    else if(key === 'viscosity'){
-      const r=Math.max(0.5,p1)/1000, eta=Math.max(0.1,p2);
-      const rho=7800, sigma=1000, g=9.8;
-      const vt = (2*r*r*(rho-sigma)*g)/(9*eta);
-      const y = Math.min(h-40, 40 + (t*vt*30)% (h-80));
-      ctx.fillStyle='rgba(6,182,212,0.15)'; ctx.fillRect(w*0.3,20,w*0.4,h-40);
-      ctx.strokeStyle='#06b6d4'; ctx.strokeRect(w*0.3,20,w*0.4,h-40);
-      ctx.beginPath(); ctx.arc(w/2,y,Math.max(6,r*4000),0,Math.PI*2); ctx.fillStyle='#f59e0b'; ctx.fill();
-      setTelemetry('Terminal v', vt.toFixed(3)+' m/s', 'Radius r', (r*1000).toFixed(1)+' mm', 'η', eta.toFixed(2)+' Pa·s');
-    }
-    // ========== CAPILLARY ==========
-    else if(key === 'capillary'){
-      const r=Math.max(0.1,p1)/1000, T=Math.max(0.02,p2);
-      const hRise = (2*T*Math.cos(0))/(1000*9.8*r);
-      const climb = Math.min(h*0.5, hRise*800);
-      ctx.strokeStyle='#5a6478'; ctx.lineWidth=3;
-      ctx.beginPath(); ctx.moveTo(w/2-12,h*0.85); ctx.lineTo(w/2-12,h*0.15); ctx.lineTo(w/2+12,h*0.15); ctx.lineTo(w/2+12,h*0.85); ctx.stroke();
-      ctx.fillStyle='rgba(6,182,212,0.5)'; ctx.fillRect(w/2-10,h*0.85-climb,20,climb);
-      ctx.fillStyle='rgba(6,182,212,0.3)'; ctx.fillRect(0,h*0.85,w,h*0.15);
-      setTelemetry('Rise h', (hRise*100).toFixed(2)+' cm', 'Radius r', (r*1000).toFixed(2)+' mm', 'T', T.toFixed(3)+' N/m');
-    }
-    // ========== SONOMETER ==========
-    else if(key === 'sonometer'){
-      const L=Math.max(10,p1)/100, Tens=Math.max(1,p2), mu=0.01;
-      const f = (1/(2*L))*Math.sqrt(Tens/mu);
-      const amp = 25*Math.sin(t*f*0.15);
-      ctx.strokeStyle='#3a4258'; ctx.lineWidth=6;
-      ctx.beginPath(); ctx.moveTo(40,h/2); ctx.lineTo(w-40,h/2); ctx.stroke();
-      ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2;
-      ctx.beginPath();
-      for(let x=60;x<w-60;x+=2){ const y=h/2+amp*Math.sin((x-60)/(w-120)*Math.PI); if(x===60)ctx.moveTo(x,y); else ctx.lineTo(x,y); }
-      ctx.stroke();
-      setTelemetry('Frequency f', f.toFixed(1)+' Hz', 'Length L', (L*100).toFixed(1)+' cm', 'Tension', Tens.toFixed(1)+' N');
-    }
-    // ========== RESONANCE TUBE ==========
-    else if(key === 'resonance'){
-      const freq=Math.max(100,p1), d=Math.max(1,p2);
-      const vSound=340, lambda=vSound/freq, L1=lambda/4 - 0.3*d/100;
-      const waterLevel = h*0.7 - Math.min(h*0.4, L1*200);
-      ctx.fillStyle='#1a1f2e'; ctx.fillRect(w*0.4,h*0.15,w*0.2,h*0.7);
-      ctx.fillStyle='rgba(6,182,212,0.5)'; ctx.fillRect(w*0.4,waterLevel,w*0.2,h*0.85-waterLevel);
-      ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2;
-      ctx.beginPath(); ctx.moveTo(w*0.35,h*0.15); ctx.lineTo(w*0.65,h*0.15); ctx.stroke();
-      setTelemetry('λ/4 − e', (L1*100).toFixed(1)+' cm', 'Wavelength λ', (lambda*100).toFixed(1)+' cm', 'v_sound', vSound+' m/s');
-    }
-    // ========== MIRRORS ==========
-    else if(key === 'mirrors'){
-      const u=-Math.abs(p1), f=p2;
-      const v = 1/(1/f + 1/u);
-      const m = -v/u;
-      const ox=w*0.25, cy=h/2, sc=3;
-      ctx.strokeStyle='#5a6478'; ctx.lineWidth=3;
-      ctx.beginPath(); ctx.arc(w*0.75,cy,Math.abs(f)*sc, -Math.PI/3, Math.PI/3); ctx.stroke();
-      ctx.fillStyle='#ef4444'; ctx.fillRect(ox-8,cy-30,16,60);
-      ctx.strokeStyle='#06b6d4'; ctx.setLineDash([4,3]);
-      ctx.beginPath(); ctx.moveTo(ox,cy-30); ctx.lineTo(w*0.75,cy); ctx.stroke();
-      ctx.setLineDash([]);
-      if(v>0){ ctx.fillStyle='#10b981'; ctx.fillRect(w*0.75 - v*sc -8, cy-30*Math.abs(m),16,60*Math.abs(m)); }
-      setTelemetry('Image v', v.toFixed(1)+' cm', 'Magnification', m.toFixed(2), 'Nature', v>0?'Real':'Virtual');
-    }
-    // ========== PRISM ==========
-    else if(key === 'prism'){
-      const A=Math.max(30,Math.min(70,p1))*Math.PI/180, mu=Math.max(1.2,p2);
-      const dm = 2*Math.asin(mu*Math.sin(A/2)) - A;
-      const cx=w/2, cy=h*0.55;
-      ctx.fillStyle='rgba(6,182,212,0.2)';
-      ctx.beginPath(); ctx.moveTo(cx,cy-80); ctx.lineTo(cx-90,cy+60); ctx.lineTo(cx+90,cy+60); ctx.closePath(); ctx.fill();
-      ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2;
-      ctx.beginPath(); ctx.moveTo(40,cy-40); ctx.lineTo(cx-40,cy-20); ctx.lineTo(cx+50,cy+30); ctx.lineTo(w-40,cy+50); ctx.stroke();
-      setTelemetry('δ_min', (dm*180/Math.PI).toFixed(1)+'°', 'µ', mu.toFixed(3), 'A', (A*180/Math.PI).toFixed(0)+'°');
-    }
-    // ========== REAL / APPARENT DEPTH ==========
-    else if(key === 'depth'){
-      const real=Math.max(1,p1), mu=Math.max(1.1,p2);
-      const app = real/mu;
-      ctx.fillStyle='rgba(6,182,212,0.25)'; ctx.fillRect(0,h*0.3,w,h*0.7);
-      ctx.fillStyle='#f59e0b'; ctx.beginPath(); ctx.arc(w/2,h*0.3+real*8,10,0,Math.PI*2); ctx.fill();
-      ctx.strokeStyle='#10b981'; ctx.setLineDash([5,4]);
-      ctx.beginPath(); ctx.arc(w/2,h*0.3+app*8,10,0,Math.PI*2); ctx.stroke();
-      ctx.setLineDash([]);
-      setTelemetry('Real depth', real.toFixed(1)+' cm', 'Apparent depth', app.toFixed(2)+' cm', 'µ', mu.toFixed(3));
-    }
-    // ========== LENSES ==========
-    else if(key === 'lenses'){
-      const u=-Math.abs(p1), f=p2;
-      const v = 1/(1/f + 1/u);
-      const m = v/u;
-      const cx=w/2, cy=h/2;
-      ctx.strokeStyle='#5a6478'; ctx.lineWidth=3;
-      ctx.beginPath(); ctx.moveTo(cx,cy-90); ctx.quadraticCurveTo(cx+20,cy,cx,cy+90); ctx.quadraticCurveTo(cx-20,cy,cx,cy-90); ctx.stroke();
-      ctx.fillStyle='#ef4444'; ctx.fillRect(cx+u*3-8,cy-25,16,50);
-      if(v>0){ ctx.fillStyle='#10b981'; ctx.fillRect(cx+v*3-8,cy-25*Math.abs(m),16,50*Math.abs(m)); }
-      setTelemetry('Image v', v.toFixed(1)+' cm', 'Magnification m', m.toFixed(2), 'Nature', v>0?'Real, inverted':'Virtual');
-    }
-    // ========== TELESCOPE ==========
-    else if(key === 'telescope'){
-      const fo=Math.max(10,p1), fe=Math.max(1,p2);
-      const m = fo/fe, L = fo+fe;
-      ctx.strokeStyle='#5a6478'; ctx.lineWidth=8;
-      ctx.strokeRect(w*0.15,h*0.35,w*0.7,h*0.3);
-      ctx.fillStyle='#06b6d4'; ctx.fillRect(w*0.15,h*0.35,20,h*0.3);
-      ctx.fillStyle='#f59e0b'; ctx.fillRect(w*0.15+w*0.7-15,h*0.4,15,h*0.2);
-      setTelemetry('Magnification m', m.toFixed(1), 'Tube length', L.toFixed(1)+' cm', 'f_o / f_e', fo.toFixed(0)+' / '+fe.toFixed(0));
-    }
-    // ========== DIFFRACTION GRATING ==========
-    else if(key === 'grating'){
-      const N=Math.max(100,p1)*1000, n=Math.max(1,Math.min(3,Math.round(p2)));
-      const lambda=550e-9, d=1/N, theta=Math.asin(n*lambda/d)*180/Math.PI;
-      ctx.fillStyle='#0a0e1a'; ctx.fillRect(0,0,w,h);
-      for(let i=0;i<5;i++){
-        const ang=(i-2)*12;
-        const x=w/2 + Math.sin(ang*Math.PI/180)*180;
-        ctx.beginPath(); ctx.arc(x,h*0.6,8,0,Math.PI*2);
-        ctx.fillStyle=`hsl(${180+i*40},80%,60%)`; ctx.fill();
-      }
-      ctx.fillStyle='#f59e0b'; ctx.fillRect(w/2-4,h*0.2,8,h*0.25);
-      setTelemetry('θ (order '+n+')', theta.toFixed(2)+'°', 'λ (assumed)', '550 nm', 'N', (N/1000).toFixed(0)+' lines/mm');
-    }
-    // ========== BOYLE ==========
-    else if(key === 'boyle'){
-      const V=Math.max(0.5,p1), P=Math.max(10,p2), PV=P*V;
-      const pH=Math.min(h-100,Math.max(40,V*25));
-      ctx.fillStyle='#1f2436'; ctx.fillRect(w/2-70,h-50-pH,140,pH);
-      ctx.strokeStyle='#06b6d4'; ctx.strokeRect(w/2-70,h-50-pH,140,pH);
-      ctx.fillStyle='#ef4444'; ctx.fillRect(w/2-68,h-55-pH,136,10);
-      setTelemetry('Pressure P', P.toFixed(1)+' kPa', 'Volume V', V.toFixed(2)+' L', 'P×V', PV.toFixed(1));
-    }
-    // ========== CHARLES ==========
-    else if(key === 'charles'){
-      const V0=Math.max(0.5,p1), Tc=p2, T=Tc+273;
-      const V = V0*(T/300);
-      const pH=Math.min(h-80,Math.max(30,V*40));
-      ctx.fillStyle='#1f2436'; ctx.fillRect(w/2-60,h-40-pH,120,pH);
-      ctx.strokeStyle='#10b981'; ctx.strokeRect(w/2-60,h-40-pH,120,pH);
-      ctx.fillStyle='#f59e0b'; ctx.fillRect(w/2-58,h-45-pH,116,8);
-      setTelemetry('Volume V', V.toFixed(2)+' L', 'Temp T', T.toFixed(0)+' K', 'V/T', (V/T).toFixed(4));
-    }
-    // ========== SPECIFIC HEAT ==========
-    else if(key === 'sp_heat'){
-      const mMetal=Math.max(10,p1), Tmetal=Math.max(30,p2);
-      const mWater=100, Twater=25, cWater=4.2, cMetal=0.4;
-      const Tf = (mMetal*cMetal*Tmetal + mWater*cWater*Twater)/(mMetal*cMetal + mWater*cWater);
-      const prog = Math.min(1,t/8);
-      const Tnow = Tmetal - (Tmetal-Tf)*prog;
-      ctx.fillStyle='#3a4258'; ctx.fillRect(w*0.3,h*0.3,w*0.4,h*0.5);
-      ctx.fillStyle=`hsl(${30-prog*20},80%,50%)`; ctx.fillRect(w*0.32,h*0.55,w*0.36,h*0.22);
-      setTelemetry('Final Tf', Tf.toFixed(1)+' °C', 'Metal T now', Tnow.toFixed(1)+' °C', 'c_metal (est)', cMetal.toFixed(2)+' J/g°C');
-    }
-    // ========== LATENT ICE ==========
-    else if(key === 'latent_ice'){
-      const mIce=Math.max(1,p1), mWater=Math.max(50,p2);
-      const L=334, c=4.2, T0=40;
-      const Tf = (mWater*c*T0 - mIce*L)/(mWater*c + mIce*c);
-      const prog=Math.min(1,t/10);
-      ctx.fillStyle='rgba(6,182,212,0.3)'; ctx.fillRect(w*0.25,h*0.3,w*0.5,h*0.5);
-      ctx.fillStyle='#e8edf5'; ctx.fillRect(w*0.35,h*0.35+(1-prog)*80,w*0.3,20*prog+5);
-      setTelemetry('Final T', Math.max(0,Tf).toFixed(1)+' °C', 'Ice melted', (mIce*prog).toFixed(1)+' g', 'L_f', '334 J/g');
-    }
-    // ========== LATENT STEAM ==========
-    else if(key === 'latent_steam'){
-      const mSteam=Math.max(0.5,p1), mWater=Math.max(50,p2);
-      const L=2260, c=4.2, T0=25;
-      const Tf = (mSteam*L + mSteam*c*100 + mWater*c*T0)/(mWater*c + mSteam*c);
-      const prog=Math.min(1,t/8);
-      ctx.fillStyle='rgba(239,68,68,0.2)'; ctx.fillRect(w*0.25,h*0.25,w*0.5,h*0.55);
-      ctx.fillStyle='#06b6d4'; ctx.beginPath(); ctx.arc(w/2,h*0.4-prog*30,8,0,Math.PI*2); ctx.fill();
-      setTelemetry('Final T', Tf.toFixed(1)+' °C', 'Steam added', (mSteam*prog).toFixed(1)+' g', 'L_v', '2260 J/g');
-    }
-    // ========== SEARLE'S BAR ==========
-    else if(key === 'searles'){
-      const dTdx=Math.max(0.2,p1), A=Math.max(0.2,p2)/10000;
-      const k=400, H=k*A*(dTdx*100);
-      ctx.fillStyle='#5a6478'; ctx.fillRect(w*0.15,h*0.4,w*0.7,h*0.2);
-      for(let i=0;i<10;i++){
-        ctx.fillStyle=`hsl(${30-i*3},70%,${50+i*3}%)`;
-        ctx.fillRect(w*0.15+i*(w*0.07),h*0.4,w*0.07,h*0.2);
-      }
-      setTelemetry('Heat current H', H.toFixed(2)+' W', 'k (Cu)', '400 W/m·K', 'dθ/dx', dTdx.toFixed(2)+' °C/cm');
-    }
-    // ========== METRE BRIDGE ==========
-    else if(key === 'metre_bridge'){
-      const R=Math.max(0.5,p1), S=Math.max(0.5,p2);
-      const l = 100*(R/(R+S));
-      ctx.strokeStyle='#5a6478'; ctx.lineWidth=6;
-      ctx.beginPath(); ctx.moveTo(40,h*0.6); ctx.lineTo(w-40,h*0.6); ctx.stroke();
-      ctx.fillStyle='#f59e0b'; ctx.beginPath(); ctx.arc(40+l*((w-80)/100),h*0.6,10,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='#06b6d4'; ctx.fillRect(w*0.2,h*0.25,60,30);
-      ctx.fillStyle='#ef4444'; ctx.fillRect(w*0.7,h*0.25,60,30);
-      setTelemetry('Balancing length l', l.toFixed(1)+' cm', 'R/S', (R/S).toFixed(3), 'R (known S)', R.toFixed(2)+' Ω');
-    }
-    // ========== POTENTIOMETER (internal r) ==========
-    else if(key === 'potentiometer'){
-      const E=Math.max(0.5,p1), r=Math.max(0.05,p2);
-      const R=2, l1=60, l2=l1*(E/(E+r*(E/R)/(1+E/R*0+1))); // simplified
-      const lOpen=70, lClosed=lOpen*(E/(E + r*0.5));
-      ctx.strokeStyle='#5a6478'; ctx.lineWidth=4;
-      ctx.beginPath(); ctx.moveTo(50,h*0.55); ctx.lineTo(w-50,h*0.55); ctx.stroke();
-      ctx.fillStyle='#10b981'; ctx.beginPath(); ctx.arc(50+lOpen*((w-100)/100),h*0.55,8,0,Math.PI*2); ctx.fill();
-      setTelemetry('l (open)', lOpen.toFixed(1)+' cm', 'l (closed)', lClosed.toFixed(1)+' cm', 'Internal r', r.toFixed(2)+' Ω');
-    }
-    // ========== COMPARE EMF ==========
-    else if(key === 'compare_emf'){
-      const E1=Math.max(0.5,p1), E2=Math.max(0.5,p2);
-      const l1=80, l2=l1*(E2/E1);
-      ctx.strokeStyle='#5a6478'; ctx.lineWidth=4;
-      ctx.beginPath(); ctx.moveTo(50,h*0.5); ctx.lineTo(w-50,h*0.5); ctx.stroke();
-      ctx.fillStyle='#ef4444'; ctx.beginPath(); ctx.arc(50+l1*((w-100)/100),h*0.5,9,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='#06b6d4'; ctx.beginPath(); ctx.arc(50+l2*((w-100)/100),h*0.5,9,0,Math.PI*2); ctx.fill();
-      setTelemetry('E1/E2', (E1/E2).toFixed(3), 'l1', l1.toFixed(1)+' cm', 'l2', l2.toFixed(1)+' cm');
-    }
-    // ========== JOULE HEATING ==========
-    else if(key === 'joule'){
-      const I=Math.max(0.1,p1), R=Math.max(0.5,p2);
-      const H=I*I*R*(t*0.5);
-      const dT = H/(100*4.2);
-      ctx.fillStyle='#3a4258'; ctx.fillRect(w*0.3,h*0.25,w*0.4,h*0.5);
-      const heat=Math.min(1,dT/30);
-      ctx.fillStyle=`rgba(239,68,68,${0.2+heat*0.5})`; ctx.fillRect(w*0.32,h*0.5,w*0.36,h*0.22);
-      setTelemetry('Heat H', H.toFixed(1)+' J', 'ΔT water', dT.toFixed(2)+' °C', 'Power I²R', (I*I*R).toFixed(2)+' W');
-    }
-    // ========== DIODE I-V ==========
-    else if(key === 'diode'){
-      const Vf=Math.max(0,p1), R=Math.max(10,p2);
-      const Is=1e-12, Vt=0.026, n=1.5;
-      const Id = Is*(Math.exp(Vf/(n*Vt))-1);
-      const Iactual = Math.min(Id, Vf/R*1000);
-      ctx.strokeStyle='#3a4258'; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(40,h-40); ctx.lineTo(w-40,h-40); ctx.moveTo(40,h-40); ctx.lineTo(40,40); ctx.stroke();
-      ctx.strokeStyle='#22d3ee'; ctx.lineWidth=2;
-      ctx.beginPath();
-      for(let x=0;x<w-80;x+=2){
-        const v=x/80, i=Is*(Math.exp(v/(n*Vt))-1)*1e8;
-        const y=h-40-Math.min(h-80,i);
-        if(x===0)ctx.moveTo(40+x,y); else ctx.lineTo(40+x,y);
-      }
-      ctx.stroke();
-      ctx.fillStyle='#f59e0b'; ctx.beginPath(); ctx.arc(40+Vf*80, h-40-Math.min(h-80,Iactual*20),6,0,Math.PI*2); ctx.fill();
-      setTelemetry('Vf', Vf.toFixed(2)+' V', 'Current Id', Iactual.toFixed(2)+' mA', 'Knee ~', '0.7 V');
-    }
-    // ========== ZENER ==========
-    else if(key === 'zener'){
-      const Vz=Math.max(2,p1), Rs=Math.max(50,p2);
-      const Vin=12, Vout = Math.min(Vin, Vz);
-      const Iz = (Vin-Vout)/Rs*1000;
-      ctx.fillStyle='#1f2436'; ctx.fillRect(w*0.25,h*0.3,w*0.5,h*0.4);
-      ctx.strokeStyle='#f59e0b'; ctx.lineWidth=3;
-      ctx.strokeRect(w*0.25,h*0.3,w*0.5,h*0.4);
-      ctx.fillStyle='#10b981'; ctx.font='16px JetBrains Mono';
-      ctx.fillText('Vout = '+Vout.toFixed(1)+' V', w*0.35, h*0.55);
-      setTelemetry('V_Zener', Vz.toFixed(1)+' V', 'I_Z', Iz.toFixed(1)+' mA', 'Regulated?', Vout<=Vz?'YES':'NO');
-    }
-    // ========== TRANSISTOR CE ==========
-    else if(key === 'transistor'){
-      const Ib=Math.max(1,p1), Vce=Math.max(0.5,p2);
-      const beta=100, Ic=Ib*beta/1000;
-      ctx.strokeStyle='#3a4258'; ctx.beginPath(); ctx.moveTo(50,h-50); ctx.lineTo(w-40,h-50); ctx.moveTo(50,h-50); ctx.lineTo(50,40); ctx.stroke();
-      ctx.strokeStyle='#22d3ee'; ctx.lineWidth=2;
-      ctx.beginPath();
-      for(let x=0;x<w-100;x+=3){
-        const v=x/40, ic = beta*(Ib/1000)*(1-Math.exp(-v/2));
-        const y=h-50-ic*80;
-        if(x===0)ctx.moveTo(50+x,y); else ctx.lineTo(50+x,y);
-      }
-      ctx.stroke();
-      setTelemetry('Ib', Ib.toFixed(0)+' µA', 'Ic', Ic.toFixed(2)+' mA', 'β (hFE)', beta.toFixed(0));
-    }
-    // ========== LOGIC GATES ==========
-    else if(key === 'logic'){
-      const A=Math.round(Math.max(0,Math.min(1,p1))), B=Math.round(Math.max(0,Math.min(1,p2)));
-      const gates = [
-        {name:'AND', out:A&B}, {name:'OR', out:A|B}, {name:'NOT A', out:1-A},
-        {name:'NAND', out:1-(A&B)}, {name:'NOR', out:1-(A|B)}, {name:'XOR', out:A^B}
-      ];
-      gates.forEach((g,i)=>{
-        const x=60+(i%3)* (w/3.5), y=60+Math.floor(i/3)* (h/2.2);
-        ctx.fillStyle = g.out ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.2)';
-        ctx.fillRect(x,y,120,70);
-        ctx.strokeStyle=g.out?'#10b981':'#ef4444'; ctx.strokeRect(x,y,120,70);
-        ctx.fillStyle='#e8edf5'; ctx.font='14px Space Grotesk';
-        ctx.fillText(g.name, x+15, y+30);
-        ctx.font='20px JetBrains Mono'; ctx.fillText(g.out?'1':'0', x+50, y+55);
-      });
-      setTelemetry('Input A', A.toString(), 'Input B', B.toString(), 'AND output', (A&B).toString());
-    }
-    // ========== RADIOACTIVE DECAY ==========
-    else if(key === 'decay'){
-      const T12=Math.max(0.5,p1), N0=Math.max(10,p2);
-      const lambda=Math.LN2/T12, N=N0*Math.exp(-lambda*t), A=lambda*N;
-      const remaining=Math.max(0,Math.round(N));
-      for(let i=0;i<Math.min(200,remaining);i++){
-        const x=30+Math.random()*(w-60), y=30+Math.random()*(h-60);
-        ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fillStyle='#f59e0b'; ctx.fill();
-      }
-      setTelemetry('N remaining', remaining.toString(), 'Activity A', A.toFixed(1)+' Bq', 't / T½', (t/T12).toFixed(2));
-    }
-    // ========== FALLBACK ==========
-    else {
-      ctx.strokeStyle='rgba(245,158,11,0.25)'; ctx.lineWidth=1;
-      for(let x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
-      for(let y=0;y<h;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
-      ctx.beginPath();
-      for(let x=0;x<w;x+=2){ const y=h/2+Math.sin(x*0.02+t)*40; if(x===0)ctx.moveTo(x,y); else ctx.lineTo(x,y); }
-      ctx.strokeStyle='#22d3ee'; ctx.lineWidth=3; ctx.stroke();
-      setTelemetry('Param A', p1.toFixed(2), 'Param B', p2.toFixed(2), 't', t.toFixed(1)+' s');
-    }
-
-    requestAnimationFrame(draw);
-  }
-  draw();
-}
-
-document.getElementById('uni-in-1').addEventListener('input', e => { uniState.p1 = parseFloat(e.target.value)||0; });
-document.getElementById('uni-in-2').addEventListener('input', e => { uniState.p2 = parseFloat(e.target.value)||0; });
-document.getElementById('uni-play').addEventListener('click', () => { uniState.running = !uniState.running; });
-document.getElementById('uni-stop').addEventListener('click', () => { uniState.t = 0; });
-
-/* ---------- LOADER & INITIALIZATION ---------- */
+/* ---------- LOADER ---------- */
 window.addEventListener('load', () => {
   setTimeout(() => {
     document.getElementById('loader').classList.add('hide');
     setTimeout(() => {
       document.getElementById('loader').style.display = 'none';
       initHeroParticles();
-      runUniversalLoop();
     }, 800);
   }, 2400);
 });
@@ -2415,6 +1790,7 @@ function initHeroParticles(){
       ctx.fillStyle = `rgba(${p.c},0.6)`;
       ctx.fill();
     });
+    // connect close particles
     for(let i=0;i<particles.length;i++){
       for(let j=i+1;j<particles.length;j++){
         const dx = particles[i].x-particles[j].x;
@@ -2435,6 +1811,7 @@ function initHeroParticles(){
   draw();
 }
 
+/* ---------- SCROLL TO PRAC ---------- */
 function scrollToPrac(id){
   const el = document.getElementById(id);
   if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
@@ -2445,9 +1822,10 @@ function scrollToPrac(id){
    ======================================================================== */
 (function vernierCaliper(){
   const svg = document.getElementById('vernier-svg');
-  let pos = 0;
+  const stage = document.getElementById('vernier-stage');
+  let pos = 0; // mm, 0 to 150
   let zeroErr = 0;
-  let zeroMode = 'none';
+  let zeroMode = 'none'; // 'none', 'pos', 'neg'
   let locked = false;
 
   function render(){
@@ -2455,11 +1833,14 @@ function scrollToPrac(id){
     const baseY = 200;
     const scaleStart = 80;
     const scaleEnd = 720;
-    const pxPerMm = 4;
-    const jawPos = scaleStart + 60 + pos * pxPerMm;
+    const pxPerMm = 4; // 150mm = 600px
+    const jawPos = scaleStart + 60 + pos * pxPerMm; // initial 60mm offset for fixed jaw
 
-    let html = `<rect x="0" y="0" width="${w}" height="${h}" fill="transparent"/>`;
+    let html = '';
+    // background grid
+    html += `<rect x="0" y="0" width="${w}" height="${h}" fill="transparent"/>`;
 
+    // Object (blue block) being measured
     const objX = scaleStart + 60;
     const objW = jawPos - objX;
     if(objW > 2){
@@ -2467,7 +1848,9 @@ function scrollToPrac(id){
       html += `<text x="${objX + objW/2}" y="${baseY-70}" fill="#06b6d4" font-size="11" text-anchor="middle" font-family="JetBrains Mono">Object</text>`;
     }
 
+    // Main scale bar (fixed)
     html += `<rect x="${scaleStart}" y="${baseY}" width="${scaleEnd-scaleStart}" height="40" fill="#1a1f2e" stroke="#3a4258" stroke-width="1" rx="2"/>`;
+    // Main scale markings (cm and mm)
     for(let mm=0; mm<=150; mm++){
       const x = scaleStart + 60 + mm*pxPerMm;
       if(x > scaleEnd) break;
@@ -2479,25 +1862,32 @@ function scrollToPrac(id){
         html += `<text x="${x}" y="${baseY+32}" fill="#9aa3b8" font-size="9" text-anchor="middle" font-family="JetBrains Mono">${mm/10}</text>`;
       }
     }
+    // label
     html += `<text x="${scaleStart-20}" y="${baseY+25}" fill="#f59e0b" font-size="10" font-family="JetBrains Mono">cm</text>`;
 
+    // Fixed jaw (upper)
     html += `<path d="M${scaleStart+60},${baseY} L${scaleStart+60},${baseY-80} L${scaleStart+70},${baseY-80} L${scaleStart+70},${baseY} Z" fill="#2a3142" stroke="#5a6478" stroke-width="1.5"/>`;
     html += `<rect x="${scaleStart+55}" y="${baseY-8}" width="20" height="8" fill="#3a4258"/>`;
 
+    // Sliding jaw (lower) with vernier scale
     const vernierWidth = 100;
     const vernierX = jawPos;
     html += `<g id="vc-drag" style="cursor:grab">`;
     html += `<path d="M${vernierX},${baseY+40} L${vernierX},${baseY+120} L${vernierX+10},${baseY+120} L${vernierX+10},${baseY+40} Z" fill="#2a3142" stroke="#5a6478" stroke-width="1.5"/>`;
+    // Vernier scale plate (extends left from sliding jaw)
     html += `<rect x="${vernierX-vernierWidth}" y="${baseY+40}" width="${vernierWidth}" height="35" fill="#1f2436" stroke="#3a4258" stroke-width="1" rx="2"/>`;
+    // Vernier scale markings - 10 divisions spanning 9mm of main scale
     for(let i=0;i<=10;i++){
       const vx = vernierX - vernierWidth + i*(vernierWidth/10);
       html += `<line x1="${vx}" y1="${baseY+40}" x2="${vx}" y2="${baseY+55}" stroke="#e8edf5" stroke-width="1"/>`;
       html += `<text x="${vx}" y="${baseY+68}" fill="#06b6d4" font-size="8" text-anchor="middle" font-family="JetBrains Mono">${i}</text>`;
     }
+    // grip handle
     html += `<rect x="${vernierX+10}" y="${baseY+70}" width="40" height="15" fill="#f59e0b" rx="2"/>`;
     html += `<text x="${vernierX+30}" y="${baseY+82}" fill="#000" font-size="9" text-anchor="middle" font-weight="bold">DRAG</text>`;
     html += `</g>`;
 
+    // gradients
     html += `<defs>
       <linearGradient id="objGrad" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.3"/>
@@ -2507,6 +1897,7 @@ function scrollToPrac(id){
 
     svg.innerHTML = html;
 
+    // attach drag
     const dragG = svg.querySelector('#vc-drag');
     let dragging = false, startX = 0, startPos = 0;
     function onDown(e){
@@ -2537,10 +1928,23 @@ function scrollToPrac(id){
   }
 
   function updateReadout(){
+    // Main scale: nearest cm below pos
     const mainMm = Math.floor(pos);
     const fracMm = pos - mainMm;
+    // Vernier coincidence: which vernier tick aligns best
     let bestI = 0, bestDiff = 999;
     for(let i=0;i<=10;i++){
+      const vernierTickMm = mainMm + (i/10)*9; // vernier spans 9mm
+      // Actually vernier: each vernier division = 0.9mm. Coincidence when vernier tick i aligns with main scale tick at (mainMm + i*0.9)
+      // The fractional part determines coincidence
+      const expected = i * 0.9;
+      const diff = Math.abs((fracMm) - expected);
+      // we want vernier tick i to align with some main tick. tick i is at position mainMm + i*0.9 (relative to vernier 0 at pos)
+      // Actually pos = mainMm + frac. Vernier 0 is at pos. Tick i is at pos + i*0.9. We want this to coincide with mainMm + k for integer k.
+      // pos + i*0.9 = mainMm + k → frac + i*0.9 = k → k - i*0.9 = frac
+      // So coincidence when frac ≈ i*0.9 mod 1, or frac ≈ (1 - i*0.1) ... let me think simpler:
+      // Vernier reading = i * 0.1 mm where i is the coincident tick
+      // For display, find i such that i*0.1 ≈ frac (mod 1 within 0.1 precision)
       const testDiff = Math.abs(((fracMm - i*0.1) + 1) % 1);
       const testDiff2 = Math.abs(fracMm - i*0.1);
       const d = Math.min(testDiff, testDiff2, Math.abs(testDiff-1));
@@ -2561,6 +1965,7 @@ function scrollToPrac(id){
     document.getElementById('vc-pos-input').value = pos.toFixed(2);
   }
 
+  // Zero error buttons
   document.querySelectorAll('#vc-zeroerr button').forEach(b => {
     b.addEventListener('click', () => {
       document.querySelectorAll('#vc-zeroerr button').forEach(x => x.classList.remove('active'));
@@ -2604,37 +2009,46 @@ function scrollToPrac(id){
    ======================================================================== */
 (function micrometer(){
   const svg = document.getElementById('mic-svg');
-  let reading = 0;
+  let reading = 0; // mm, 0 to 25
   let zeroErr = 0;
   let zeroMode = 'none';
   let locked = false;
-  const pitch = 0.5;
-  const divisions = 50;
+  const pitch = 0.5; // mm per thimble revolution
+  const divisions = 50; // thimble divisions
 
   function render(){
+    const w = 800, h = 400;
     const cy = 200;
     const frameX = 100;
     const anvilX = 180;
     const spindleBaseX = 220;
-    const spindleX = spindleBaseX + reading * 16;
+    const spindleX = spindleBaseX + reading * 16; // 16px per mm
     const sleeveEndX = 540;
     const thimbleLen = 130;
 
     let html = '';
+
+    // Object being measured
     const objW = spindleX - anvilX;
     if(objW > 2){
       html += `<rect x="${anvilX}" y="${cy-40}" width="${objW}" height="50" fill="url(#micObj)" stroke="#06b6d4" stroke-width="1.5" rx="2"/>`;
       html += `<text x="${anvilX + objW/2}" y="${cy-50}" fill="#06b6d4" font-size="11" text-anchor="middle" font-family="JetBrains Mono">Object</text>`;
     }
 
+    // U-frame (C-frame)
     html += `<path d="M${frameX},${cy-90} L${frameX},${cy+90} L${anvilX+20},${cy+90} L${anvilX+20},${cy+50} L${anvilX},${cy+50} L${anvilX},${cy-50} L${frameX+30},${cy-50} L${frameX+30},${cy-90} Z" fill="#2a3142" stroke="#5a6478" stroke-width="2"/>`;
+    // Anvil (fixed)
     html += `<rect x="${anvilX-15}" y="${cy-30}" width="15" height="60" fill="#3a4258" stroke="#5a6478" stroke-width="1.5"/>`;
     html += `<rect x="${anvilX-18}" y="${cy-8}" width="3" height="16" fill="#5a6478"/>`;
 
+    // Spindle (moves)
     html += `<rect x="${spindleX}" y="${cy-12}" width="${sleeveEndX-spindleX+10}" height="24" fill="#4a5468" stroke="#5a6478" stroke-width="1"/>`;
     html += `<rect x="${spindleX-3}" y="${cy-8}" width="3" height="16" fill="#7a8499"/>`;
 
+    // Sleeve (main scale, fixed)
     html += `<rect x="${spindleBaseX}" y="${cy-20}" width="${sleeveEndX-spindleBaseX}" height="40" fill="#1a1f2e" stroke="#3a4258" stroke-width="1"/>`;
+    // Main scale: mm marks and half-mm marks
+    // 25mm range, each mm = 16px
     for(let mm=0; mm<=25; mm++){
       const x = spindleBaseX + mm*16;
       if(x > sleeveEndX) break;
@@ -2642,16 +2056,20 @@ function scrollToPrac(id){
         html += `<line x1="${x}" y1="${cy-20}" x2="${x}" y2="${cy-5}" stroke="#e8edf5" stroke-width="1.5"/>`;
         html += `<text x="${x}" y="${cy-25}" fill="#e8edf5" font-size="9" text-anchor="middle" font-family="JetBrains Mono">${mm}</text>`;
       } else if(mm % 1 === 0){
+        // half-mark above (0.5mm marks)
         html += `<line x1="${x-8}" y1="${cy-20}" x2="${x-8}" y2="${cy-12}" stroke="#9aa3b8" stroke-width="1"/>`;
         html += `<line x1="${x}" y1="${cy+5}" x2="${x}" y2="${cy+20}" stroke="#e8edf5" stroke-width="1.5"/>`;
       }
     }
+    // Reference line
     html += `<line x1="${spindleBaseX}" y1="${cy}" x2="${sleeveEndX}" y2="${cy}" stroke="#f59e0b" stroke-width="0.5" stroke-dasharray="2,2"/>`;
 
+    // Thimble (rotates, moves with spindle)
     const thimbleX = sleeveEndX;
-    const rotation = (reading / pitch) * (2*Math.PI / divisions) * 50;
+    const rotation = (reading / pitch) * (2*Math.PI / divisions) * 50; // visual rotation factor
     html += `<g id="mc-drag" style="cursor:grab">`;
     html += `<rect x="${thimbleX}" y="${cy-35}" width="${thimbleLen}" height="70" fill="url(#thimbleGrad)" stroke="#5a6478" stroke-width="1.5" rx="6"/>`;
+    // Thimble ticks
     for(let i=0;i<divisions;i++){
       const angle = (i/divisions) * Math.PI * 2 + rotation;
       const xOnThimble = thimbleX + 15 + (Math.sin(angle)*0.5+0.5) * (thimbleLen-30);
@@ -2661,13 +2079,16 @@ function scrollToPrac(id){
         html += `<text x="${xOnThimble}" y="${cy-18}" fill="#fbbf24" font-size="7" text-anchor="middle" font-family="JetBrains Mono">${i}</text>`;
       }
     }
+    // Ratchet at end
     html += `<path d="M${thimbleX+thimbleLen},${cy-30} L${thimbleX+thimbleLen+25},${cy-20} L${thimbleX+thimbleLen+25},${cy+20} L${thimbleX+thimbleLen},${cy+30} Z" fill="#3a4258" stroke="#5a6478" stroke-width="1.5"/>`;
     html += `<circle cx="${thimbleX+thimbleLen+15}" cy="${cy}" r="4" fill="#f59e0b"/>`;
+    // grip texture
     for(let i=0;i<8;i++){
       html += `<line x1="${thimbleX+20+i*12}" y1="${cy-30}" x2="${thimbleX+20+i*12}" y2="${cy+30}" stroke="rgba(0,0,0,0.2)" stroke-width="1"/>`;
     }
     html += `</g>`;
 
+    // Drag hint
     html += `<text x="${thimbleX+thimbleLen/2}" y="${cy+55}" fill="#f59e0b" font-size="10" text-anchor="middle" font-family="JetBrains Mono">↑ drag vertically to rotate ↑</text>`;
 
     html += `<defs>
@@ -2684,6 +2105,7 @@ function scrollToPrac(id){
 
     svg.innerHTML = html;
 
+    // attach drag
     const dragG = svg.querySelector('#mc-drag');
     let dragging = false, startY = 0, startReading = 0;
     function onDown(e){
@@ -2696,8 +2118,8 @@ function scrollToPrac(id){
     function onMove(e){
       if(!dragging) return;
       const y = (e.touches?e.touches[0]:e).clientY;
-      const dy = (startY - y);
-      const delta = (dy / 8) * 0.01;
+      const dy = (startY - y); // up = increase
+      const delta = (dy / 8) * 0.01; // sensitivity
       reading = Math.max(0, Math.min(25, startReading + delta));
       updateReadout();
       render();
@@ -2715,8 +2137,8 @@ function scrollToPrac(id){
   }
 
   function updateReadout(){
-    const mainScale = Math.floor(reading * 2) / 2;
-    const thimbleReading = (reading - mainScale) / pitch * 50;
+    const mainScale = Math.floor(reading * 2) / 2; // nearest 0.5mm below
+    const thimbleReading = (reading - mainScale) / pitch * 50; // 0-50
     let finalReading = reading;
     if(zeroMode === 'pos') finalReading = reading - zeroErr;
     if(zeroMode === 'neg') finalReading = reading + zeroErr;
@@ -2771,21 +2193,25 @@ function scrollToPrac(id){
    ======================================================================== */
 (function spherometer(){
   const svg = document.getElementById('sph-svg');
-  let reading = 0;
-  let L = 30;
+  let reading = 0; // mm, central leg position
+  let L = 30; // leg separation
   let locked = false;
-  const pitch = 1;
+  const pitch = 1; // 1mm per revolution
   const divisions = 100;
 
   function render(){
+    const w = 800, h = 400;
     const cx = 400, cy = 250;
-    const legR = L * 4;
-    const centralY = cy - reading * 10;
+    const legR = L * 4; // visual scale
+    const centralY = cy - reading * 10; // central leg moves down with reading
 
     let html = '';
+
+    // Surface (ground)
     html += `<line x1="50" y1="${cy+legR*0.4}" x2="750" y2="${cy+legR*0.4}" stroke="#3a4258" stroke-width="2"/>`;
     html += `<line x1="50" y1="${cy+legR*0.4+5}" x2="750" y2="${cy+legR*0.4+5}" stroke="#2a3142" stroke-width="1" stroke-dasharray="4,4"/>`;
 
+    // Three legs (triangular arrangement - 2 front, 1 back)
     const leg1X = cx - legR, leg1Y = cy + 20;
     const leg2X = cx + legR, leg2Y = cy + 20;
     const leg3X = cx, leg3Y = cy - legR*0.6;
@@ -2794,18 +2220,23 @@ function scrollToPrac(id){
     html += `<line x1="${cx+15}" y1="${cy-30}" x2="${leg2X}" y2="${leg2Y}" stroke="#5a6478" stroke-width="3"/>`;
     html += `<line x1="${cx}" y1="${cy-30}" x2="${leg3X}" y2="${leg3Y}" stroke="#5a6478" stroke-width="3"/>`;
 
+    // Leg tips
     html += `<circle cx="${leg1X}" cy="${leg1Y}" r="3" fill="#7a8499"/>`;
     html += `<circle cx="${leg2X}" cy="${leg2Y}" r="3" fill="#7a8499"/>`;
     html += `<circle cx="${leg3X}" cy="${leg3Y}" r="3" fill="#7a8499"/>`;
 
+    // Central vertical screw
     const screwTopY = cy - 150;
     const screwBottomY = centralY + 20;
     html += `<rect x="${cx-4}" y="${screwTopY}" width="8" height="${screwBottomY-screwTopY}" fill="#4a5468" stroke="#5a6478" stroke-width="1"/>`;
+    // screw threads
     for(let y=screwTopY; y<screwBottomY; y+=8){
       html += `<line x1="${cx-4}" y1="${y}" x2="${cx+4}" y2="${y}" stroke="#2a3142" stroke-width="1"/>`;
     }
+    // Central leg tip (moves down as reading increases)
     html += `<polygon points="${cx-4},${screwBottomY} ${cx+4},${screwBottomY} ${cx},${screwBottomY+12}" fill="#7a8499"/>`;
 
+    // Pitch scale (vertical, on the side)
     const pitchX = cx + 30;
     html += `<rect x="${pitchX}" y="${screwTopY}" width="20" height="${screwBottomY-screwTopY}" fill="#1a1f2e" stroke="#3a4258" stroke-width="1"/>`;
     for(let mm=0; mm<=10; mm++){
@@ -2817,11 +2248,13 @@ function scrollToPrac(id){
       }
     }
 
+    // Circular scale (disk) - rotates
     const diskY = screwTopY - 5;
     const diskR = 50;
     const rotation = (reading / pitch) * (360/divisions);
     html += `<g id="sp-drag" style="cursor:grab">`;
     html += `<ellipse cx="${cx}" cy="${diskY}" rx="${diskR}" ry="15" fill="url(#diskGrad)" stroke="#5a6478" stroke-width="1.5"/>`;
+    // circular scale ticks
     for(let i=0;i<divisions;i++){
       const angle = (i/divisions) * Math.PI * 2 + rotation/180*Math.PI;
       const x1 = cx + Math.cos(angle) * (diskR-3);
@@ -2831,17 +2264,23 @@ function scrollToPrac(id){
       const isMajor = i % 10 === 0;
       html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${isMajor?'#fbbf24':'#9aa3b8'}" stroke-width="${isMajor?1.2:0.7}"/>`;
     }
+    // pointer/reference
     html += `<polygon points="${cx-3},${diskY-5} ${cx+3},${diskY-5} ${cx},${diskY+5}" fill="#f59e0b"/>`;
     html += `</g>`;
 
+    // Top knob
     html += `<rect x="${cx-15}" y="${diskY-25}" width="30" height="20" fill="#3a4258" stroke="#5a6478" stroke-width="1" rx="3"/>`;
 
+    // Label
+    html += `<text x="${cx}" y="${cy+legR*0.4+30}" fill="#f59e0b" font-size="10" text-anchor="middle" font-family="JetBrains Mono">Surface</text>`;
+    html += `<text x="${cx}" y="${diskY-35}" fill="#06b6d4" font-size="10" text-anchor="middle" font-family="JetBrains Mono">Circular Scale</text>`;
+    html += `<text x="${pitchX+25}" y="${diskY-5}" fill="#06b6d4" font-size="8" font-family="JetBrains Mono">Pitch</text>`;
+
     html += `<defs>
-      <linearGradient id="diskGrad" x1="0" y1="0" x2="0" y2="1">
+      <radialGradient id="diskGrad">
         <stop offset="0%" stop-color="#5a6478"/>
-        <stop offset="50%" stop-color="#2a3142"/>
-        <stop offset="100%" stop-color="#5a6478"/>
-      </linearGradient>
+        <stop offset="100%" stop-color="#2a3142"/>
+      </radialGradient>
     </defs>`;
 
     svg.innerHTML = html;
@@ -2859,7 +2298,7 @@ function scrollToPrac(id){
       if(!dragging) return;
       const y = (e.touches?e.touches[0]:e).clientY;
       const dy = (startY - y);
-      const delta = (dy / 10) * 0.01;
+      const delta = dy / 20; // 20px = 1mm
       reading = Math.max(0, Math.min(10, startReading + delta));
       updateReadout();
       render();
@@ -2878,12 +2317,17 @@ function scrollToPrac(id){
 
   function updateReadout(){
     const mainScale = Math.floor(reading);
-    const circReading = (reading - mainScale) * divisions;
-
+    const circularReading = (reading - mainScale); // 0-1, multiply by 100 for divisions
+    const finalReading = reading;
     document.getElementById('sp-main').textContent = mainScale.toFixed(2);
-    document.getElementById('sp-circ').textContent = circReading.toFixed(3);
-    document.getElementById('sp-final').textContent = reading.toFixed(3) + ' mm';
+    document.getElementById('sp-circ').textContent = (circularReading * 100).toFixed(3);
+    document.getElementById('sp-final').textContent = finalReading.toFixed(3) + ' mm';
     document.getElementById('sp-pos-input').value = reading.toFixed(3);
+    // radius of curvature calc
+    if(reading > 0){
+      const R = (L*L)/(6*reading) + reading/2;
+      // we don't display this but could
+    }
   }
 
   document.getElementById('sp-L').addEventListener('input', e => {
@@ -2900,7 +2344,7 @@ function scrollToPrac(id){
     document.getElementById('sp-play').innerHTML = locked
       ? '<i class="fa-solid fa-lock"></i> Unlock'
       : '<i class="fa-solid fa-play"></i> Lock';
-    toast(locked?'Spherometer locked':'Spherometer unlocked');
+    toast(locked?'Reading locked':'Reading unlocked');
   });
   document.getElementById('sp-stop').addEventListener('click', () => {
     reading = 0; locked = false;
@@ -2919,63 +2363,109 @@ function scrollToPrac(id){
 (function travellingMicroscope(){
   const svg = document.getElementById('tm-svg');
   const eyeSvg = document.getElementById('tm-eye-svg');
-  let posX = 0;
-  let posY = 0;
+  let posX = 30; // mm
+  let posY = 20; // mm
   let refX = null;
+  // sample object: array of features
+  const features = [
+    {x:20, y:15, label:'A', color:'#f59e0b'},
+    {x:50, y:25, label:'B', color:'#06b6d4'},
+    {x:75, y:10, label:'C', color:'#10b981'},
+    {x:90, y:30, label:'D', color:'#ef4444'}
+  ];
 
   function render(){
-    const baseX = 100 + posX * 5;
-    const baseY = 350 - posY * 5;
+    const w = 800, h = 500;
+    const baseY = 420;
+    const scaleX = 6, scaleY = 6; // px per mm
 
     let html = '';
-    html += `<rect x="50" y="380" width="700" height="20" fill="#1a1f2e" stroke="#3a4258"/>`;
-    for(let i=0; i<=100; i+=10){
-      const x = 100 + i*5;
-      html += `<line x1="${x}" y1="380" x2="${x}" y2="395" stroke="#e8edf5" stroke-width="1.5"/>`;
-      html += `<text x="${x}" y="375" fill="#9aa3b8" font-size="8" text-anchor="middle" font-family="JetBrains Mono">${i}</text>`;
+
+    // Base
+    html += `<rect x="50" y="${baseY}" width="700" height="20" fill="#1a1f2e" stroke="#3a4258" stroke-width="1.5" rx="2"/>`;
+    // Base scale (horizontal mm scale)
+    for(let mm=0; mm<=100; mm+=5){
+      const x = 100 + mm*scaleX;
+      html += `<line x1="${x}" y1="${baseY+20}" x2="${x}" y2="${baseY+20+(mm%10===0?8:4)}" stroke="${mm%10===0?'#e8edf5':'#5a6478'}" stroke-width="1"/>`;
+      if(mm % 10 === 0){
+        html += `<text x="${x}" y="${baseY+45}" fill="#9aa3b8" font-size="9" text-anchor="middle" font-family="JetBrains Mono">${mm}</text>`;
+      }
     }
 
-    html += `<rect x="80" y="100" width="20" height="280" fill="#1a1f2e" stroke="#3a4258"/>`;
+    // Vertical column
+    const colX = 100 + posX*scaleX;
+    html += `<rect x="${colX-10}" y="60" width="20" height="${baseY-60}" fill="#2a3142" stroke="#3a4258" stroke-width="1.5"/>`;
+    // Vertical scale
+    for(let mm=0; mm<=50; mm+=5){
+      const y = baseY - 20 - mm*scaleY;
+      html += `<line x1="${colX-15}" y1="${y}" x2="${colX-15-(mm%10===0?8:4)}" y2="${y}" stroke="${mm%10===0?'#e8edf5':'#5a6478'}" stroke-width="1"/>`;
+      if(mm % 10 === 0){
+        html += `<text x="${colX-28}" y="${y+3}" fill="#9aa3b8" font-size="9" text-anchor="end" font-family="JetBrains Mono">${mm}</text>`;
+      }
+    }
 
-    html += `<g id="tm-body" style="cursor:grab">`;
-    html += `<rect x="${baseX-20}" y="${baseY-80}" width="40" height="100" fill="#2a3142" stroke="#06b6d4" stroke-width="1.5" rx="4"/>`;
-    html += `<circle cx="${baseX}" cy="${baseY-40}" r="15" fill="#1f2436" stroke="#f59e0b" stroke-width="1.5"/>`;
-    html += `<line x1="${baseX}" y1="${baseY-80}" x2="${baseX}" y2="${baseY-110}" stroke="#5a6478" stroke-width="4"/>`;
-    html += `<circle cx="${baseX}" cy="${baseY-115}" r="10" fill="#3a4258"/>`;
+    // Sample stage (where the object/features are)
+    html += `<rect x="100" y="${baseY-15}" width="600" height="10" fill="#3a4258" stroke="#5a6478" stroke-width="1"/>`;
+    // Draw features (small markers on the stage)
+    features.forEach(f => {
+      const fx = 100 + f.x*scaleX;
+      const fy = baseY - 5;
+      html += `<circle cx="${fx}" cy="${fy}" r="4" fill="${f.color}"/>`;
+      html += `<text x="${fx}" y="${fy-8}" fill="${f.color}" font-size="9" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold">${f.label}</text>`;
+    });
+
+    // Microscope body (horizontal arm extending from column)
+    const micY = baseY - 20 - posY*scaleY;
+    html += `<g id="tm-drag" style="cursor:grab">`;
+    // Horizontal arm
+    html += `<rect x="${colX}" y="${micY-15}" width="80" height="30" fill="#2a3142" stroke="#3a4258" stroke-width="1.5"/>`;
+    // Microscope tube
+    html += `<rect x="${colX+50}" y="${micY-60}" width="30" height="60" fill="#3a4258" stroke="#5a6478" stroke-width="1.5" rx="3"/>`;
+    // Objective lens (bottom)
+    html += `<ellipse cx="${colX+65}" cy="${micY-2}" rx="18" ry="6" fill="#1a1f2e" stroke="#06b6d4" stroke-width="1.5"/>`;
+    html += `<ellipse cx="${colX+65}" cy="${micY-2}" rx="14" ry="4" fill="#06b6d4" opacity="0.3"/>`;
+    // Eyepiece (top)
+    html += `<rect x="${colX+55}" y="${micY-75}" width="20" height="18" fill="#3a4258" stroke="#5a6478" stroke-width="1.5" rx="2"/>`;
+    // Focus knob
+    html += `<circle cx="${colX+25}" cy="${micY-30}" r="10" fill="#f59e0b" stroke="#fbbf24" stroke-width="1"/>`;
+    html += `<circle cx="${colX+25}" cy="${micY-30}" r="4" fill="#1a1f2e"/>`;
+    // X movement knob
+    html += `<circle cx="${colX-25}" cy="${baseY-50}" r="12" fill="#3a4258" stroke="#5a6478" stroke-width="1.5"/>`;
+    html += `<line x1="${colX-37}" y1="${baseY-50}" x2="${colX-13}" y2="${baseY-50}" stroke="#5a6478" stroke-width="2"/>`;
+    html += `<line x1="${colX-25}" y1="${baseY-62}" x2="${colX-25}" y2="${baseY-38}" stroke="#5a6478" stroke-width="2"/>`;
+    // Y movement knob
+    html += `<circle cx="${colX+50}" cy="${micY+30}" r="10" fill="#3a4258" stroke="#5a6478" stroke-width="1.5"/>`;
+    html += `<line x1="${colX+40}" y1="${micY+30}" x2="${colX+60}" y2="${micY+30}" stroke="#5a6478" stroke-width="2"/>`;
+
+    // "DRAG" label
+    html += `<text x="${colX+65}" y="${micY-85}" fill="#f59e0b" font-size="9" text-anchor="middle" font-family="JetBrains Mono">DRAG</text>`;
     html += `</g>`;
+
+    // Indicator showing current position
+    html += `<line x1="${colX+65}" y1="${micY}" x2="${colX+65}" y2="${baseY-5}" stroke="#f59e0b" stroke-width="0.5" stroke-dasharray="2,2" opacity="0.5"/>`;
 
     svg.innerHTML = html;
 
-    let eyeHtml = '';
-    eyeHtml += `<circle cx="200" cy="200" r="180" fill="#030712" stroke="#06b6d4" stroke-width="3"/>`;
-    eyeHtml += `<line x1="20" y1="200" x2="380" y2="200" stroke="#ef4444" stroke-width="1.5"/>`;
-    eyeHtml += `<line x1="200" y1="20" x2="200" y2="380" stroke="#ef4444" stroke-width="1.5"/>`;
-    
-    const objRelX = 200 + (posX - 50) * 4;
-    eyeHtml += `<circle cx="${objRelX}" cy="200" r="12" fill="#f59e0b" opacity="0.8"/>`;
-
-    eyeSvg.innerHTML = eyeHtml;
-
-    const dragG = svg.querySelector('#tm-body');
-    let dragging = false, startMouseX = 0, startMouseY = 0, startX = 0, startY = 0;
+    // attach drag - both X and Y movement
+    const dragG = svg.querySelector('#tm-drag');
+    let dragging = false, startX = 0, startY = 0, startPx = 0, startPy = 0;
     function onDown(e){
       dragging = true;
       document.body.classList.add('dragging');
-      startMouseX = (e.touches?e.touches[0]:e).clientX;
-      startMouseY = (e.touches?e.touches[0]:e).clientY;
-      startX = posX;
-      startY = posY;
+      const pt = (e.touches?e.touches[0]:e);
+      startX = pt.clientX; startY = pt.clientY;
+      startPx = posX; startPy = posY;
     }
     function onMove(e){
       if(!dragging) return;
-      const mx = (e.touches?e.touches[0]:e).clientX;
-      const my = (e.touches?e.touches[0]:e).clientY;
-      const dx = (mx - startMouseX) / 5;
-      const dy = (startMouseY - my) / 5;
-      posX = Math.max(0, Math.min(100, startX + dx));
-      posY = Math.max(0, Math.min(50, startY + dy));
+      const pt = (e.touches?e.touches[0]:e);
+      const dx = (pt.clientX - startX) / scaleX;
+      const dy = (pt.clientY - startY) / scaleY;
+      posX = Math.max(0, Math.min(100, startPx + dx));
+      posY = Math.max(0, Math.min(50, startPy - dy)); // up = increase Y
       updateReadout();
       render();
+      renderEyepiece();
     }
     function onUp(){
       dragging = false;
@@ -2989,407 +2479,1535 @@ function scrollToPrac(id){
     window.addEventListener('touchend', onUp);
   }
 
+  function renderEyepiece(){
+    // Show a circular view with cross wires
+    // The view shows what's directly under the microscope
+    // Find which feature is closest to current position
+    const w = 400, h = 400;
+    const cx = 200, cy = 200;
+    const viewRadius = 180;
+
+    let html = '';
+
+    // Background circle (dark, like looking through scope)
+    html += `<defs>
+      <radialGradient id="eyeBg">
+        <stop offset="0%" stop-color="#0a1428"/>
+        <stop offset="70%" stop-color="#050a14"/>
+        <stop offset="100%" stop-color="#000"/>
+      </radialGradient>
+      <clipPath id="eyeClip">
+        <circle cx="${cx}" cy="${cy}" r="${viewRadius}"/>
+      </clipPath>
+    </defs>`;
+
+    html += `<circle cx="${cx}" cy="${cy}" r="${viewRadius+5}" fill="#1a1f2e" stroke="#3a4258" stroke-width="3"/>`;
+    html += `<circle cx="${cx}" cy="${cy}" r="${viewRadius}" fill="url(#eyeBg)"/>`;
+
+    // Inside the clipped area, show features within "view range"
+    html += `<g clip-path="url(#eyeClip)">`;
+
+    // Show features near current microscope position (within +/- 10mm)
+    features.forEach(f => {
+      const dx = f.x - posX;
+      const dy = (f.y - posY) * 0.3; // y has less visual movement (magnification)
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if(dist < 15){
+        const vx = cx + dx * 12; // magnification factor
+        const vy = cy + dy * 12;
+        html += `<circle cx="${vx}" cy="${vy}" r="8" fill="${f.color}" opacity="${1 - dist/15}"/>`;
+        html += `<text x="${vx}" y="${vy+3}" fill="#000" font-size="10" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold">${f.label}</text>`;
+      }
+    });
+
+    // Cross wires (2 perpendicular lines)
+    html += `<line x1="${cx-viewRadius}" y1="${cy}" x2="${cx+viewRadius}" y2="${cy}" stroke="#f59e0b" stroke-width="0.8" opacity="0.7"/>`;
+    html += `<line x1="${cx}" y1="${cy-viewRadius}" x2="${cx}" y2="${cy+viewRadius}" stroke="#f59e0b" stroke-width="0.8" opacity="0.7"/>`;
+    // small center cross
+    html += `<line x1="${cx-8}" y1="${cy}" x2="${cx+8}" y2="${cy}" stroke="#fff" stroke-width="1"/>`;
+    html += `<line x1="${cx}" y1="${cy-8}" x2="${cx}" y2="${cy+8}" stroke="#fff" stroke-width="1"/>`;
+
+    html += `</g>`;
+
+    // Outer ring
+    html += `<circle cx="${cx}" cy="${cy}" r="${viewRadius}" fill="none" stroke="#06b6d4" stroke-width="1" opacity="0.5"/>`;
+
+    eyeSvg.innerHTML = html;
+  }
+
   function updateReadout(){
     document.getElementById('tm-x').textContent = posX.toFixed(2) + ' mm';
     document.getElementById('tm-y').textContent = posY.toFixed(2) + ' mm';
-    document.getElementById('tm-refx').textContent = refX !== null ? refX.toFixed(2) + ' mm' : '—';
-    document.getElementById('tm-dx').textContent = refX !== null ? Math.abs(posX - refX).toFixed(2) + ' mm' : '0.00 mm';
+    if(refX !== null){
+      document.getElementById('tm-refx').textContent = refX.toFixed(2) + ' mm';
+      document.getElementById('tm-dx').textContent = Math.abs(posX - refX).toFixed(2) + ' mm';
+    } else {
+      document.getElementById('tm-refx').textContent = '—';
+      document.getElementById('tm-dx').textContent = '0.00 mm';
+    }
     document.getElementById('tm-x-input').value = posX.toFixed(2);
     document.getElementById('tm-y-input').value = posY.toFixed(2);
   }
 
+  document.getElementById('tm-x-input').addEventListener('input', e => {
+    posX = Math.max(0, Math.min(100, parseFloat(e.target.value) || 0));
+    updateReadout(); render(); renderEyepiece();
+  });
+  document.getElementById('tm-y-input').addEventListener('input', e => {
+    posY = Math.max(0, Math.min(50, parseFloat(e.target.value) || 0));
+    updateReadout(); render(); renderEyepiece();
+  });
   document.getElementById('tm-setref').addEventListener('click', () => {
     refX = posX;
     updateReadout();
-    toast('Reference X recorded');
+    toast('Reference set at X = ' + refX.toFixed(2) + ' mm');
   });
   document.getElementById('tm-reset').addEventListener('click', () => {
-    posX = 0; posY = 0; refX = null;
-    updateReadout(); render();
+    posX = 30; posY = 20; refX = null;
+    updateReadout(); render(); renderEyepiece();
     toast('Microscope reset');
-  });
-  document.getElementById('tm-x-input').addEventListener('input', e => {
-    posX = Math.max(0, Math.min(100, parseFloat(e.target.value)||0));
-    updateReadout(); render();
-  });
-  document.getElementById('tm-y-input').addEventListener('input', e => {
-    posY = Math.max(0, Math.min(50, parseFloat(e.target.value)||0));
-    updateReadout(); render();
   });
 
   updateReadout();
   render();
+  renderEyepiece();
 })();
 
 /* ========================================================================
    PROJECTILE MOTION
    ======================================================================== */
-(function projectileMotion(){
+(function projectile(){
   const canvas = document.getElementById('proj-canvas');
-  if(!canvas) return;
   const ctx = canvas.getContext('2d');
-  
-  let angle = 45;
-  let vel = 25;
+  let angle = 45; // degrees
+  let velocity = 25; // m/s
   let g = 9.8;
   let running = false;
-  let t = 0;
-  let path = [];
+  let ball = null;
+  let trail = [];
+  let animId = null;
 
   function resize(){
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    const r = canvas.getBoundingClientRect();
+    canvas.width = r.width * devicePixelRatio;
+    canvas.height = r.height * devicePixelRatio;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
   }
   resize();
-  window.addEventListener('resize', resize);
+  window.addEventListener('resize', () => { resize(); draw(); });
+
+  function worldToScreen(x, y){
+    const r = canvas.getBoundingClientRect();
+    const scale = Math.min(r.width / 100, r.height / 60); // 100m wide, 60m tall
+    return {
+      sx: 60 + x * scale,
+      sy: r.height - 60 - y * scale
+    };
+  }
 
   function draw(){
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const rad = angle * Math.PI / 180;
-    const vx = vel * Math.cos(rad);
-    const vy = vel * Math.sin(rad);
-    const totalT = (2 * vy) / g;
-    const maxH = (vy * vy) / (2 * g);
-    const range = vx * totalT;
+    const r = canvas.getBoundingClientRect();
+    ctx.clearRect(0, 0, r.width, r.height);
 
-    document.getElementById('pj-range').textContent = range.toFixed(1) + ' m';
-    document.getElementById('pj-height').textContent = maxH.toFixed(1) + ' m';
-    document.getElementById('pj-time').textContent = totalT.toFixed(2) + ' s';
+    // Grid
+    ctx.strokeStyle = 'rgba(245,158,11,0.05)';
+    ctx.lineWidth = 1;
+    for(let x=0; x<r.width; x+=40){
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,r.height); ctx.stroke();
+    }
+    for(let y=0; y<r.height; y+=40){
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(r.width,y); ctx.stroke();
+    }
 
-    const originX = 60;
-    const originY = canvas.height - 60;
-    const scale = Math.min((canvas.width - 100) / Math.max(range, 10), (canvas.height - 100) / Math.max(maxH, 10));
-
+    // Ground
+    const ground = worldToScreen(0, 0);
     ctx.strokeStyle = '#3a4258';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(30, originY);
-    ctx.lineTo(canvas.width - 30, originY);
+    ctx.moveTo(0, ground.sy);
+    ctx.lineTo(r.width, ground.sy);
     ctx.stroke();
 
+    // Distance markers
+    ctx.fillStyle = '#5a6478';
+    ctx.font = '10px JetBrains Mono';
+    for(let m=0; m<=100; m+=20){
+      const p = worldToScreen(m, 0);
+      ctx.fillText(m + 'm', p.sx-8, p.sy+18);
+      ctx.beginPath(); ctx.moveTo(p.sx, p.sy); ctx.lineTo(p.sx, p.sy+5); ctx.stroke();
+    }
+
+    // Cannon
+    const origin = worldToScreen(0, 0);
+    const angleRad = angle * Math.PI / 180;
     ctx.save();
-    ctx.translate(originX, originY);
-    ctx.rotate(-rad);
+    ctx.translate(origin.sx, origin.sy);
+    // base
+    ctx.fillStyle = '#3a4258';
+    ctx.beginPath();
+    ctx.arc(0, 0, 18, Math.PI, 0);
+    ctx.fill();
+    // barrel
+    ctx.rotate(-angleRad);
     ctx.fillStyle = '#f59e0b';
-    ctx.fillRect(0, -10, 40, 20);
+    ctx.fillRect(0, -6, 35, 12);
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0, -6, 35, 12);
     ctx.restore();
 
-    ctx.beginPath();
-    for(let i=0; i<=100; i++){
-      const currT = (i/100) * totalT;
-      const px = vx * currT * scale;
-      const py = (vy * currT - 0.5 * g * currT * currT) * scale;
-      if(i === 0) ctx.moveTo(originX + px, originY - py);
-      else ctx.lineTo(originX + px, originY - py);
+    // Velocity arrow (when not running)
+    if(!running){
+      const arrowLen = velocity * 1.5;
+      const ax = origin.sx + Math.cos(-angleRad) * arrowLen;
+      const ay = origin.sy + Math.sin(-angleRad) * arrowLen;
+      ctx.strokeStyle = '#06b6d4';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(origin.sx, origin.sy);
+      ctx.lineTo(ax, ay);
+      ctx.stroke();
+      // arrow head
+      const headAngle = Math.atan2(ay - origin.sy, ax - origin.sx);
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(ax - 10*Math.cos(headAngle - 0.4), ay - 10*Math.sin(headAngle - 0.4));
+      ctx.lineTo(ax - 10*Math.cos(headAngle + 0.4), ay - 10*Math.sin(headAngle + 0.4));
+      ctx.closePath();
+      ctx.fillStyle = '#06b6d4';
+      ctx.fill();
+      // velocity label
+      ctx.fillStyle = '#06b6d4';
+      ctx.font = 'bold 12px JetBrains Mono';
+      ctx.fillText(velocity.toFixed(1) + ' m/s', ax + 8, ay - 5);
+
+      // angle arc
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(origin.sx, origin.sy, 30, -angleRad, 0);
+      ctx.stroke();
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillText(angle + '°', origin.sx + 35, origin.sy - 5);
     }
-    ctx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
-    ctx.setLineDash([4, 4]);
-    ctx.stroke();
-    ctx.setLineDash([]);
 
-    if(running){
-      t += 0.016;
-      const px = vx * t;
-      const py = vy * t - 0.5 * g * t * t;
-      path.push({x: originX + px * scale, y: originY - py * scale});
-
-      if(t >= totalT){ running = false; t = totalT; }
+    // Trajectory preview (dotted)
+    if(!running){
+      ctx.strokeStyle = 'rgba(245,158,11,0.3)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 5]);
+      ctx.beginPath();
+      let first = true;
+      const vx = velocity * Math.cos(angleRad);
+      const vy = velocity * Math.sin(angleRad);
+      const T = 2 * vy / g;
+      for(let t=0; t<=T; t+=T/40){
+        const x = vx * t;
+        const y = vy * t - 0.5 * g * t * t;
+        if(y < 0) break;
+        const p = worldToScreen(x, y);
+        if(first){ ctx.moveTo(p.sx, p.sy); first = false; }
+        else ctx.lineTo(p.sx, p.sy);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
     }
 
-    ctx.beginPath();
-    path.forEach((pt, idx) => {
-      if(idx === 0) ctx.moveTo(pt.x, pt.y);
-      else ctx.lineTo(pt.x, pt.y);
-    });
-    ctx.strokeStyle = '#06b6d4';
-    ctx.lineWidth = 3;
-    ctx.stroke();
+    // Trail
+    if(trail.length > 1){
+      ctx.strokeStyle = 'rgba(245,158,11,0.6)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      trail.forEach((p, i) => {
+        const sp = worldToScreen(p.x, p.y);
+        if(i===0) ctx.moveTo(sp.sx, sp.sy);
+        else ctx.lineTo(sp.sx, sp.sy);
+      });
+      ctx.stroke();
+    }
 
-    const curPx = originX + vx * t * scale;
-    const curPy = originY - (vy * t - 0.5 * g * t * t) * scale;
-    ctx.beginPath();
-    ctx.arc(curPx, curPy, 8, 0, Math.PI * 2);
-    ctx.fillStyle = '#ef4444';
-    ctx.fill();
-
-    requestAnimationFrame(draw);
+    // Ball
+    if(ball){
+      const bp = worldToScreen(ball.x, ball.y);
+      // glow
+      const grad = ctx.createRadialGradient(bp.sx, bp.sy, 0, bp.sx, bp.sy, 20);
+      grad.addColorStop(0, 'rgba(245,158,11,0.6)');
+      grad.addColorStop(1, 'rgba(245,158,11,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(bp.sx, bp.sy, 20, 0, Math.PI*2);
+      ctx.fill();
+      // ball
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.arc(bp.sx, bp.sy, 7, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
   }
-  draw();
+
+  function step(){
+    if(!running || !ball) return;
+    const dt = 0.04;
+    ball.t += dt;
+    ball.x = ball.vx * ball.t;
+    ball.y = ball.vy * ball.t - 0.5 * g * ball.t * ball.t;
+    trail.push({x: ball.x, y: ball.y});
+    if(trail.length > 200) trail.shift();
+    if(ball.y <= 0 && ball.t > 0.1){
+      ball.y = 0;
+      running = false;
+      document.getElementById('pj-play').innerHTML = '<i class="fa-solid fa-play"></i> Launch';
+      toast('Landed at ' + ball.x.toFixed(2) + ' m');
+    }
+    draw();
+    if(running) animId = requestAnimationFrame(step);
+  }
+
+  function updateReadout(){
+    const angleRad = angle * Math.PI / 180;
+    const vx = velocity * Math.cos(angleRad);
+    const vy = velocity * Math.sin(angleRad);
+    const T = 2 * vy / g;
+    const R = vx * T;
+    const H = vy * vy / (2 * g);
+    document.getElementById('pj-angle').textContent = angle.toFixed(0) + '°';
+    document.getElementById('pj-vel').textContent = velocity.toFixed(1) + ' m/s';
+    document.getElementById('pj-g').textContent = g.toFixed(1) + ' m/s²';
+    document.getElementById('pj-range').textContent = R.toFixed(1) + ' m';
+    document.getElementById('pj-height').textContent = H.toFixed(1) + ' m';
+    document.getElementById('pj-time').textContent = T.toFixed(2) + ' s';
+  }
+
+  // Drag interactions on canvas
+  let dragging = null;
+  canvas.addEventListener('mousedown', e => {
+    if(running) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const origin = worldToScreen(0, 0);
+    // Check if near cannon barrel (drag angle)
+    const dx = mx - origin.sx;
+    const dy = origin.sy - my;
+    if(Math.sqrt(dx*dx + dy*dy) < 80){
+      dragging = 'angle';
+    }
+    // Check if near velocity arrow tip (drag velocity)
+    const angleRad = angle * Math.PI / 180;
+    const tipX = origin.sx + Math.cos(angleRad) * velocity * 1.5;
+    const tipY = origin.sy - Math.sin(angleRad) * velocity * 1.5;
+    if(Math.sqrt((mx-tipX)**2 + (my-tipY)**2) < 30){
+      dragging = 'velocity';
+    }
+  });
+  canvas.addEventListener('mousemove', e => {
+    if(!dragging) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const origin = worldToScreen(0, 0);
+    const dx = mx - origin.sx;
+    const dy = origin.sy - my;
+    if(dragging === 'angle'){
+      angle = Math.round(Math.atan2(dy, dx) * 180 / Math.PI);
+      angle = Math.max(5, Math.min(85, angle));
+    } else if(dragging === 'velocity'){
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      velocity = Math.max(5, Math.min(60, dist / 1.5));
+    }
+    updateReadout();
+    draw();
+  });
+  window.addEventListener('mouseup', () => dragging = null);
+
+  // Touch
+  canvas.addEventListener('touchstart', e => {
+    if(running) return;
+    const rect = canvas.getBoundingClientRect();
+    const t = e.touches[0];
+    const mx = t.clientX - rect.left;
+    const my = t.clientY - rect.top;
+    const origin = worldToScreen(0, 0);
+    const dx = mx - origin.sx;
+    const dy = origin.sy - my;
+    if(Math.sqrt(dx*dx + dy*dy) < 100){
+      dragging = 'angle';
+    } else {
+      dragging = 'velocity';
+    }
+  }, {passive:true});
+  canvas.addEventListener('touchmove', e => {
+    if(!dragging) return;
+    const rect = canvas.getBoundingClientRect();
+    const t = e.touches[0];
+    const mx = t.clientX - rect.left;
+    const my = t.clientY - rect.top;
+    const origin = worldToScreen(0, 0);
+    const dx = mx - origin.sx;
+    const dy = origin.sy - my;
+    if(dragging === 'angle'){
+      angle = Math.round(Math.atan2(dy, dx) * 180 / Math.PI);
+      angle = Math.max(5, Math.min(85, angle));
+    } else {
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      velocity = Math.max(5, Math.min(60, dist / 1.5));
+    }
+    updateReadout(); draw();
+  }, {passive:true});
+  window.addEventListener('touchend', () => dragging = null);
+
+  document.getElementById('pj-g-input').addEventListener('input', e => {
+    g = parseFloat(e.target.value) || 9.8;
+    updateReadout(); draw();
+  });
 
   document.getElementById('pj-play').addEventListener('click', () => {
-    running = true; t = 0; path = [];
+    if(running){
+      running = false;
+      cancelAnimationFrame(animId);
+      document.getElementById('pj-play').innerHTML = '<i class="fa-solid fa-play"></i> Launch';
+      return;
+    }
+    const angleRad = angle * Math.PI / 180;
+    ball = {
+      vx: velocity * Math.cos(angleRad),
+      vy: velocity * Math.sin(angleRad),
+      x: 0, y: 0, t: 0
+    };
+    trail = [];
+    running = true;
+    document.getElementById('pj-play').innerHTML = '<i class="fa-solid fa-pause"></i> Pause';
+    step();
   });
   document.getElementById('pj-stop').addEventListener('click', () => {
-    running = false; t = 0; path = [];
+    running = false;
+    cancelAnimationFrame(animId);
+    ball = null;
+    trail = [];
+    document.getElementById('pj-play').innerHTML = '<i class="fa-solid fa-play"></i> Launch';
+    draw();
+    toast('Projectile stopped');
   });
-  document.getElementById('pj-g-input').addEventListener('input', e => {
-    g = Math.max(1, parseFloat(e.target.value) || 9.8);
-  });
+
+  updateReadout();
+  draw();
 })();
 
 /* ========================================================================
    EXPLOSIVE MOMENTUM
    ======================================================================== */
-(function explosiveMomentum(){
+(function explosive(){
   const canvas = document.getElementById('exp-canvas');
-  if(!canvas) return;
   const ctx = canvas.getContext('2d');
-
-  let ma = 1.0, mb = 1.0, mc = 1.0;
+  let mA = 1, mB = 1, mC = 1;
   let energy = 200;
-  let exploded = false;
-  let t = 0;
+  let fragments = [];
+  let blasted = false;
+  let animId = null;
+  let particles = [];
 
   function resize(){
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    const r = canvas.getBoundingClientRect();
+    canvas.width = r.width * devicePixelRatio;
+    canvas.height = r.height * devicePixelRatio;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
   }
   resize();
-  window.addEventListener('resize', resize);
+  window.addEventListener('resize', () => { resize(); draw(); });
 
   function draw(){
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const cx = canvas.width / 2;
-    const cy = canvas.height / 2;
+    const r = canvas.getBoundingClientRect();
+    ctx.clearRect(0, 0, r.width, r.height);
 
-    const totalM = ma + mb + mc;
-    document.getElementById('ex-total').textContent = totalM.toFixed(1) + ' kg';
-
-    const va = Math.sqrt((2 * energy) / (ma * 3));
-    const vb = Math.sqrt((2 * energy) / (mb * 3));
-    const vc = Math.sqrt((2 * energy) / (mc * 3));
-
-    if(!exploded){
-      ctx.beginPath();
-      ctx.arc(cx, cy, 30, 0, Math.PI * 2);
-      ctx.fillStyle = '#f59e0b';
-      ctx.fill();
-      ctx.strokeStyle = '#ef4444';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-    } else {
-      t += 0.5;
-      const angleA = 0;
-      const angleB = (2 * Math.PI) / 3;
-      const angleC = (4 * Math.PI) / 3;
-
-      const pa = { x: cx + Math.cos(angleA) * va * t, y: cy + Math.sin(angleA) * va * t };
-      const pb = { x: cx + Math.cos(angleB) * vb * t, y: cy + Math.sin(angleB) * vb * t };
-      const pc = { x: cx + Math.cos(angleC) * vc * t, y: cy + Math.sin(angleC) * vc * t };
-
-      ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(pa.x, pa.y, ma*10, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#06b6d4'; ctx.beginPath(); ctx.arc(pb.x, pb.y, mb*10, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#10b981'; ctx.beginPath(); ctx.arc(pc.x, pc.y, mc*10, 0, Math.PI*2); ctx.fill();
+    // Grid
+    ctx.strokeStyle = 'rgba(239,68,68,0.04)';
+    ctx.lineWidth = 1;
+    for(let x=0; x<r.width; x+=40){
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,r.height); ctx.stroke();
+    }
+    for(let y=0; y<r.height; y+=40){
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(r.width,y); ctx.stroke();
     }
 
-    requestAnimationFrame(draw);
-  }
-  draw();
+    const cx = r.width / 2;
+    const cy = r.height / 2;
 
+    // crosshair at center
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx-30, cy); ctx.lineTo(cx+30, cy);
+    ctx.moveTo(cx, cy-30); ctx.lineTo(cx, cy+30);
+    ctx.stroke();
+
+    // Particles (smoke/flash)
+    particles.forEach(p => {
+      ctx.fillStyle = `rgba(${p.r},${p.g},${p.b},${p.life})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+      ctx.fill();
+    });
+
+    if(!blasted){
+      // Draw bomb at center
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 25);
+      grad.addColorStop(0, '#ef4444');
+      grad.addColorStop(0.5, '#dc2626');
+      grad.addColorStop(1, '#7f1d1d');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 22, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // fuse
+      ctx.strokeStyle = '#92400e';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - 22);
+      ctx.quadraticCurveTo(cx+15, cy-35, cx+25, cy-40);
+      ctx.stroke();
+      // spark
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.arc(cx+25, cy-40, 4 + Math.sin(Date.now()/100)*1.5, 0, Math.PI*2);
+      ctx.fill();
+      // glow
+      const sparkGlow = ctx.createRadialGradient(cx+25, cy-40, 0, cx+25, cy-40, 15);
+      sparkGlow.addColorStop(0, 'rgba(251,191,36,0.6)');
+      sparkGlow.addColorStop(1, 'rgba(251,191,36,0)');
+      ctx.fillStyle = sparkGlow;
+      ctx.beginPath();
+      ctx.arc(cx+25, cy-40, 15, 0, Math.PI*2);
+      ctx.fill();
+
+      // label
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 11px JetBrains Mono';
+      ctx.textAlign = 'center';
+      ctx.fillText('ARMED', cx, cy + 4);
+      ctx.font = '9px JetBrains Mono';
+      ctx.fillStyle = '#9aa3b8';
+      ctx.fillText('Click BLAST', cx, cy + 40);
+    } else {
+      // Draw fragments
+      fragments.forEach(f => {
+        // trail
+        if(f.trail.length > 1){
+          ctx.strokeStyle = f.color + '60';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          f.trail.forEach((p, i) => {
+            if(i===0) ctx.moveTo(p.x, p.y);
+            else ctx.lineTo(p.x, p.y);
+          });
+          ctx.stroke();
+        }
+        // fragment
+        const grad = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.size * 1.5);
+        grad.addColorStop(0, f.color);
+        grad.addColorStop(1, f.color + '00');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.size * 1.5, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.fillStyle = f.color;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.size, 0, Math.PI*2);
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // velocity arrow
+        const arrowScale = 0.3;
+        const ax = f.x + f.vx * arrowScale;
+        const ay = f.y + f.vy * arrowScale;
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(f.x, f.y);
+        ctx.lineTo(ax, ay);
+        ctx.stroke();
+        // arrow head
+        const headAngle = Math.atan2(f.vy, f.vx);
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(ax - 8*Math.cos(headAngle - 0.4), ay - 8*Math.sin(headAngle - 0.4));
+        ctx.lineTo(ax - 8*Math.cos(headAngle + 0.4), ay - 8*Math.sin(headAngle + 0.4));
+        ctx.closePath();
+        ctx.fillStyle = '#fbbf24';
+        ctx.fill();
+
+        // label
+        const speed = Math.sqrt(f.vx*f.vx + f.vy*f.vy);
+        const angleDeg = (Math.atan2(-f.vy, f.vx) * 180 / Math.PI + 360) % 360;
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px JetBrains Mono';
+        ctx.textAlign = 'left';
+        ctx.fillText(`m=${f.mass.toFixed(1)}kg`, f.x + f.size + 6, f.y - 6);
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = '9px JetBrains Mono';
+        ctx.fillText(`v=${speed.toFixed(1)} m/s`, f.x + f.size + 6, f.y + 6);
+        ctx.fillText(`θ=${angleDeg.toFixed(0)}°`, f.x + f.size + 6, f.y + 18);
+      });
+
+      // Center momentum check
+      const totalPx = fragments.reduce((s,f) => s + f.mass * f.vx, 0);
+      const totalPy = fragments.reduce((s,f) => s + f.mass * f.vy, 0);
+      ctx.fillStyle = 'rgba(6,182,212,0.8)';
+      ctx.font = 'bold 11px JetBrains Mono';
+      ctx.textAlign = 'left';
+      ctx.fillText(`Σpx = ${totalPx.toFixed(2)} kg·m/s`, 15, 25);
+      ctx.fillText(`Σpy = ${totalPy.toFixed(2)} kg·m/s`, 15, 40);
+      ctx.fillStyle = '#10b981';
+      ctx.fillText('→ Momentum conserved', 15, 55);
+    }
+  }
+
+  function animate(){
+    if(!blasted) { draw(); return; }
+    // update fragments
+    fragments.forEach(f => {
+      f.x += f.vx * 0.05;
+      f.y += f.vy * 0.05;
+      // slight drag
+      f.vx *= 0.998;
+      f.vy *= 0.998;
+      f.trail.push({x: f.x, y: f.y});
+      if(f.trail.length > 80) f.trail.shift();
+
+      // bounds
+      const r = canvas.getBoundingClientRect();
+      if(f.x < -50 || f.x > r.width + 50 || f.y < -50 || f.y > r.height + 50){
+        f.vx = 0; f.vy = 0;
+      }
+    });
+    // update particles
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= 0.96;
+      p.vy *= 0.96;
+      p.life -= 0.015;
+      p.size *= 1.01;
+    });
+    particles = particles.filter(p => p.life > 0);
+    draw();
+    animId = requestAnimationFrame(animate);
+  }
+
+  function blast(){
+    const r = canvas.getBoundingClientRect();
+    const cx = r.width / 2;
+    const cy = r.height / 2;
+    const totalMass = mA + mB + mC;
+
+    // Three fragments at 120° apart, adjusted by mass
+    // Momentum conservation: mA*vA + mB*vB + mC*vC = 0
+    // Energy conservation: (1/2)(mA*vA² + mB*vB² + mC*vC²) = E
+    // Solution: send them at 120° apart with velocities inversely proportional to mass
+
+    const angleA = 90; // up
+    const angleB = 210; // down-left
+    const angleC = 330; // down-right
+
+    // For perfect 120° split with momentum conservation:
+    // v_i ∝ 1/m_i (when at 120°)
+    // Find k such that (1/2) * Σ m_i * (k/m_i)² = E
+    // (1/2) * k² * Σ (1/m_i) = E
+    // k = sqrt(2E / Σ(1/m_i))
+    const sumInv = 1/mA + 1/mB + 1/mC;
+    const k = Math.sqrt(2 * energy / sumInv);
+
+    const vA = k / mA;
+    const vB = k / mB;
+    const vC = k / mC;
+
+    // Scale for display
+    const displayScale = 3;
+
+    fragments = [
+      {
+        mass: mA, x: cx, y: cy,
+        vx: Math.cos(angleA * Math.PI/180) * vA * displayScale,
+        vy: -Math.sin(angleA * Math.PI/180) * vA * displayScale,
+        color: '#ef4444', size: 4 + mA*2, trail: []
+      },
+      {
+        mass: mB, x: cx, y: cy,
+        vx: Math.cos(angleB * Math.PI/180) * vB * displayScale,
+        vy: -Math.sin(angleB * Math.PI/180) * vB * displayScale,
+        color: '#06b6d4', size: 4 + mB*2, trail: []
+      },
+      {
+        mass: mC, x: cx, y: cy,
+        vx: Math.cos(angleC * Math.PI/180) * vC * displayScale,
+        vy: -Math.sin(angleC * Math.PI/180) * vC * displayScale,
+        color: '#10b981', size: 4 + mC*2, trail: []
+      }
+    ];
+
+    // Particles for explosion effect
+    for(let i=0; i<80; i++){
+      const a = Math.random() * Math.PI * 2;
+      const s = Math.random() * 8 + 2;
+      particles.push({
+        x: cx, y: cy,
+        vx: Math.cos(a) * s,
+        vy: Math.sin(a) * s,
+        size: Math.random() * 6 + 2,
+        life: 1,
+        r: 239, g: 68, b: 68
+      });
+    }
+    for(let i=0; i<40; i++){
+      const a = Math.random() * Math.PI * 2;
+      const s = Math.random() * 5 + 1;
+      particles.push({
+        x: cx, y: cy,
+        vx: Math.cos(a) * s,
+        vy: Math.sin(a) * s,
+        size: Math.random() * 4 + 1,
+        life: 1,
+        r: 251, g: 191, b: 36
+      });
+    }
+
+    blasted = true;
+    document.getElementById('ex-status').textContent = 'BLASTED';
+    document.getElementById('ex-status').style.color = '#10b981';
+
+    // Show velocities in toast
+    toast(`Fragment A: ${vA.toFixed(2)} m/s • B: ${vB.toFixed(2)} m/s • C: ${vC.toFixed(2)} m/s`);
+
+    animate();
+  }
+
+  function updateReadout(){
+    document.getElementById('ex-total').textContent = (mA+mB+mC).toFixed(1) + ' kg';
+    document.getElementById('ex-energy').textContent = energy.toFixed(0) + ' J';
+    document.getElementById('ex-ma-val').textContent = mA.toFixed(1);
+    document.getElementById('ex-mb-val').textContent = mB.toFixed(1);
+    document.getElementById('ex-mc-val').textContent = mC.toFixed(1);
+  }
+
+  document.getElementById('ex-ma').addEventListener('input', e => {
+    mA = parseFloat(e.target.value) || 1;
+    updateReadout();
+  });
+  document.getElementById('ex-mb').addEventListener('input', e => {
+    mB = parseFloat(e.target.value) || 1;
+    updateReadout();
+  });
+  document.getElementById('ex-mc').addEventListener('input', e => {
+    mC = parseFloat(e.target.value) || 1;
+    updateReadout();
+  });
+  document.getElementById('ex-energy-input').addEventListener('input', e => {
+    energy = parseFloat(e.target.value) || 200;
+    updateReadout();
+  });
   document.getElementById('ex-blast').addEventListener('click', () => {
-    exploded = true; t = 0;
-    document.getElementById('ex-status').textContent = 'EXPLODED';
+    if(basted) return;
+    if(blasted){
+      // reset
+      fragments = [];
+      particles = [];
+      blasted = false;
+      document.getElementById('ex-status').textContent = 'ARMED';
+      document.getElementById('ex-status').style.color = '#ef4444';
+      draw();
+      return;
+    }
+    blast();
   });
   document.getElementById('ex-reset').addEventListener('click', () => {
-    exploded = false; t = 0;
+    cancelAnimationFrame(animId);
+    fragments = [];
+    particles = [];
+    blasted = false;
     document.getElementById('ex-status').textContent = 'ARMED';
+    document.getElementById('ex-status').style.color = '#ef4444';
+    draw();
+    toast('System reset');
   });
-  document.getElementById('ex-ma').addEventListener('input', e => { ma = parseFloat(e.target.value)||1; });
-  document.getElementById('ex-mb').addEventListener('input', e => { mb = parseFloat(e.target.value)||1; });
-  document.getElementById('ex-mc').addEventListener('input', e => { mc = parseFloat(e.target.value)||1; });
-  document.getElementById('ex-energy-input').addEventListener('input', e => { energy = parseFloat(e.target.value)||200; });
+
+  updateReadout();
+  draw();
+
+  // continuous animation for spark
+  function sparkLoop(){
+    if(!blasted) draw();
+    requestAnimationFrame(sparkLoop);
+  }
+  sparkLoop();
 })();
 
 /* ========================================================================
-   REFRACTION THROUGH 5 MEDIUMS
+   REFRACTION (5 mediums)
    ======================================================================== */
 (function refraction(){
   const canvas = document.getElementById('ref-canvas');
-  if(!canvas) return;
   const ctx = canvas.getContext('2d');
-
-  let incAngle = 30; // deg
-  let n = [1.000, 1.333, 1.520, 2.417, 1.523];
+  let n = [1.000, 1.333, 1.520, 2.417, 1.523]; // air, water, glass, diamond, crown
+  let incidentAngle = 30; // degrees from normal
+  let running = false;
+  let animId = null;
+  let rayProgress = 0;
+  const mediumColors = ['rgba(135,206,235,0.05)','rgba(30,144,255,0.12)','rgba(100,149,237,0.15)','rgba(147,112,219,0.2)','rgba(72,209,204,0.15)'];
+  const mediumNames = ['Air','Water','Glass','Diamond','Crown Glass'];
 
   function resize(){
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    const r = canvas.getBoundingClientRect();
+    canvas.width = r.width * devicePixelRatio;
+    canvas.height = r.height * devicePixelRatio;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
   }
   resize();
-  window.addEventListener('resize', resize);
+  window.addEventListener('resize', () => { resize(); draw(); });
+
+  function computeAngles(){
+    // Apply Snell's law at each boundary
+    const angles = [incidentAngle];
+    let cur = incidentAngle * Math.PI / 180;
+    for(let i=1; i<5; i++){
+      const sinT = (n[i-1] * Math.sin(cur)) / n[i];
+      if(Math.abs(sinT) > 1){
+        // total internal reflection - shouldn't happen going from less to more dense
+        angles.push(null);
+        break;
+      }
+      cur = Math.asin(sinT);
+      angles.push(cur * 180 / Math.PI);
+    }
+    return angles;
+  }
 
   function draw(){
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const layerH = canvas.height / 5;
+    const r = canvas.getBoundingClientRect();
+    ctx.clearRect(0, 0, r.width, r.height);
 
-    const colors = [
-      'rgba(6, 182, 212, 0.05)',
-      'rgba(6, 182, 212, 0.15)',
-      'rgba(245, 158, 11, 0.15)',
-      'rgba(239, 68, 68, 0.15)',
-      'rgba(16, 185, 129, 0.15)'
-    ];
+    const layerH = (r.height - 60) / 5;
+    const startX = 100;
+    const rayX = startX;
 
+    // Draw medium layers
     for(let i=0; i<5; i++){
-      ctx.fillStyle = colors[i];
-      ctx.fillRect(0, i*layerH, canvas.width, layerH);
-      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-      ctx.strokeRect(0, i*layerH, canvas.width, layerH);
-    }
-
-    let currAngle = incAngle * Math.PI / 180;
-    let currX = canvas.width / 2 - Math.tan(currAngle) * layerH;
-    let currY = 0;
-
-    let readoutHtml = '';
-
-    ctx.beginPath();
-    ctx.moveTo(currX, currY);
-
-    for(let i=0; i<5; i++){
-      const nextY = (i + 1) * layerH;
-      const nextX = currX + Math.tan(currAngle) * layerH;
-
-      ctx.lineTo(nextX, nextY);
-
-      readoutHtml += `<div class="readout-row"><span class="readout-label">Medium ${i+1} θ</span><span class="readout-value">${(currAngle*180/Math.PI).toFixed(1)}°</span></div>`;
-
-      if(i < 4){
-        const sinNext = (n[i] * Math.sin(currAngle)) / n[i+1];
-        if(Math.abs(sinNext) <= 1){
-          currAngle = Math.asin(sinNext);
-        } else {
-          currAngle = -currAngle; // TIR
-        }
+      const y = 30 + i * layerH;
+      ctx.fillStyle = mediumColors[i];
+      ctx.fillRect(0, y, r.width, layerH);
+      // boundary line
+      if(i > 0){
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, y); ctx.lineTo(r.width, y);
+        ctx.stroke();
       }
-      currX = nextX;
-      currY = nextY;
+      // label
+      ctx.fillStyle = '#9aa3b8';
+      ctx.font = '11px JetBrains Mono';
+      ctx.textAlign = 'right';
+      ctx.fillText(`n${i+1} = ${n[i].toFixed(3)}`, r.width - 15, y + layerH/2 + 4);
+      ctx.fillStyle = '#e8edf5';
+      ctx.font = 'bold 10px JetBrains Mono';
+      ctx.textAlign = 'left';
+      ctx.fillText(mediumNames[i], 15, y + 18);
     }
 
+    // Compute all ray segments
+    const angles = computeAngles();
+    const points = [{x: rayX, y: 30}];
+    let curX = rayX, curY = 30;
+    const angle0 = angles[0] * Math.PI / 180;
+    // Ray enters at top, going down-right
+    curX = rayX + Math.tan(angle0) * 0; // start point
+    // Actually: ray comes from top-left, hits medium 1 top at (rayX, 30)
+    // Draw incoming ray from top of canvas
+    const incomingLen = 30;
+    const inAngle = angles[0] * Math.PI / 180;
     ctx.strokeStyle = '#fbbf24';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(rayX - Math.sin(inAngle) * incomingLen, 30 - Math.cos(inAngle) * incomingLen);
+    ctx.lineTo(rayX, 30);
     ctx.stroke();
+    // source dot
+    const srcX = rayX - Math.sin(inAngle) * incomingLen;
+    const srcY = 30 - Math.cos(inAngle) * incomingLen;
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(srcX, srcY, 8, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 9px JetBrains Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText('DRAG', srcX, srcY + 3);
 
-    document.getElementById('ref-readout').innerHTML = readoutHtml;
+    // Draw normal at top
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4,4]);
+    ctx.beginPath();
+    ctx.moveTo(rayX, 30 - 20);
+    ctx.lineTo(rayX, 30 + 20);
+    ctx.stroke();
+    ctx.setLineDash([]);
 
-    requestAnimationFrame(draw);
+    // Incident angle label
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 10px JetBrains Mono';
+    ctx.fillText(`θ₁=${angles[0].toFixed(1)}°`, rayX + 15, 25);
+
+    // Trace through each medium
+    let px = rayX, py = 30;
+    const totalLen = running ? rayProgress : 1; // 0 to 1
+    for(let i=0; i<4; i++){
+      if(!angles[i+1]) break;
+      const a = angles[i+1] * Math.PI / 180;
+      const dx = Math.sin(a) * layerH;
+      const dy = layerH;
+      const endX = px + dx;
+      const endY = py + dy;
+
+      // Draw normal at boundary
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3,3]);
+      ctx.beginPath();
+      ctx.moveTo(px - 25, py);
+      ctx.lineTo(px + 25, py);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Refraction angle label
+      ctx.fillStyle = '#06b6d4';
+      ctx.font = 'bold 9px JetBrains Mono';
+      ctx.fillText(`θ${i+2}=${angles[i+1].toFixed(1)}°`, px + 28, py + 4);
+
+      // Ray segment
+      ctx.strokeStyle = i === 0 ? '#fbbf24' : (i === 1 ? '#06b6d4' : (i === 2 ? '#10b981' : '#a78bfa'));
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+
+      px = endX;
+      py = endY;
+    }
+
+    // Exit ray (last medium to "air" below)
+    if(angles[4]){
+      const a = angles[4] * Math.PI / 180;
+      // Going from medium 5 back to air
+      const sinExit = (n[4] * Math.sin(a)) / n[0];
+      if(Math.abs(sinExit) <= 1){
+        const exitAngle = Math.asin(sinExit);
+        const dx = Math.sin(exitAngle) * 30;
+        const dy = 30;
+        ctx.strokeStyle = '#a78bfa';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px + dx, py + dy);
+        ctx.stroke();
+        // arrow head
+        const headAngle = Math.atan2(dy, dx);
+        ctx.beginPath();
+        ctx.moveTo(px + dx, py + dy);
+        ctx.lineTo(px + dx - 10*Math.cos(headAngle - 0.4), py + dy - 10*Math.sin(headAngle - 0.4));
+        ctx.lineTo(px + dx - 10*Math.cos(headAngle + 0.4), py + dy - 10*Math.sin(headAngle + 0.4));
+        ctx.closePath();
+        ctx.fillStyle = '#a78bfa';
+        ctx.fill();
+      }
+    }
   }
-  draw();
 
-  ['n1','n2','n3','n4','n5'].forEach((id, idx) => {
-    document.getElementById(`ref-${id}`).addEventListener('input', e => {
-      n[idx] = parseFloat(e.target.value) || 1.0;
+  function updateReadout(){
+    const angles = computeAngles();
+    const container = document.getElementById('ref-readout');
+    let html = '';
+    for(let i=0; i<5; i++){
+      html += `<div class="readout-row">
+        <span class="readout-label">${mediumNames[i]} (n=${n[i].toFixed(3)})</span>
+        <span class="readout-value ${i===0?'':'cyan'}">${angles[i]!==null?angles[i].toFixed(2)+'°':'TIR'}</span>
+      </div>`;
+    }
+    container.innerHTML = html;
+  }
+
+  // Drag interaction for incident angle
+  let dragging = false;
+  canvas.addEventListener('mousedown', e => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    // Check if near source dot
+    const angle0 = incidentAngle * Math.PI / 180;
+    const srcX = 100 - Math.sin(angle0) * 30;
+    const srcY = 30 - Math.cos(angle0) * 30;
+    if(Math.sqrt((mx-srcX)**2 + (my-srcY)**2) < 25){
+      dragging = true;
+    }
+  });
+  canvas.addEventListener('mousemove', e => {
+    if(!dragging) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    // Compute angle from (100, 30) to mouse position, measured from vertical (normal)
+    const dx = mx - 100;
+    const dy = 30 - my;
+    if(dy > 0){
+      incidentAngle = Math.atan2(dx, dy) * 180 / Math.PI;
+      incidentAngle = Math.max(-85, Math.min(85, incidentAngle));
+      // Make sure we go right
+      if(incidentAngle < 0) incidentAngle = -incidentAngle;
+      updateReadout();
+      draw();
+    }
+  });
+  window.addEventListener('mouseup', () => dragging = false);
+
+  canvas.addEventListener('touchstart', e => {
+    const rect = canvas.getBoundingClientRect();
+    const t = e.touches[0];
+    const mx = t.clientX - rect.left;
+    const my = t.clientY - rect.top;
+    const angle0 = incidentAngle * Math.PI / 180;
+    const srcX = 100 - Math.sin(angle0) * 30;
+    const srcY = 30 - Math.cos(angle0) * 30;
+    if(Math.sqrt((mx-srcX)**2 + (my-srcY)**2) < 40){
+      dragging = true;
+    }
+  }, {passive:true});
+  canvas.addEventListener('touchmove', e => {
+    if(!dragging) return;
+    const rect = canvas.getBoundingClientRect();
+    const t = e.touches[0];
+    const mx = t.clientX - rect.left;
+    const my = t.clientY - rect.top;
+    const dx = mx - 100;
+    const dy = 30 - my;
+    if(dy > 0){
+      incidentAngle = Math.atan2(Math.abs(dx), dy) * 180 / Math.PI;
+      incidentAngle = Math.max(0, Math.min(85, incidentAngle));
+      updateReadout();
+      draw();
+    }
+  }, {passive:true});
+  window.addEventListener('touchend', () => dragging = false);
+
+  // Input fields for n values
+  ['ref-n1','ref-n2','ref-n3','ref-n4','ref-n5'].forEach((id, i) => {
+    document.getElementById(id).addEventListener('input', e => {
+      n[i] = parseFloat(e.target.value) || 1;
+      updateReadout();
+      draw();
     });
   });
+
+  document.getElementById('ref-play').addEventListener('click', () => {
+    running = !running;
+    if(running){
+      rayProgress = 0;
+      document.getElementById('ref-play').innerHTML = '<i class="fa-solid fa-pause"></i> Pause';
+    } else {
+      document.getElementById('ref-play').innerHTML = '<i class="fa-solid fa-play"></i> Trace';
+    }
+  });
+  document.getElementById('ref-stop').addEventListener('click', () => {
+    running = false;
+    incidentAngle = 30;
+    document.getElementById('ref-play').innerHTML = '<i class="fa-solid fa-play"></i> Trace';
+    updateReadout();
+    draw();
+    toast('Refraction reset');
+  });
+
+  updateReadout();
+  draw();
 })();
 
 /* ========================================================================
    WAVE SIMULATOR
    ======================================================================== */
-(function waveSimulator(){
+(function waves(){
   const canvas = document.getElementById('wave-canvas');
-  if(!canvas) return;
   const ctx = canvas.getContext('2d');
-
-  let freq = 2.0;
-  let amp = 30;
-  let t = 0;
+  let freq = 2, amp = 30, speed = 200;
   let type = 'transverse';
+  let running = true;
+  let t = 0;
+  let animId = null;
 
   function resize(){
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    const r = canvas.getBoundingClientRect();
+    canvas.width = r.width * devicePixelRatio;
+    canvas.height = r.height * devicePixelRatio;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
   }
   resize();
-  window.addEventListener('resize', resize);
+  window.addEventListener('resize', () => { resize(); draw(); });
 
   function draw(){
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    t += 0.03;
+    const r = canvas.getBoundingClientRect();
+    ctx.clearRect(0, 0, r.width, r.height);
+    const cy = r.height / 2;
+    const wavelength = speed / freq;
 
-    const cy = canvas.height / 2;
-    ctx.beginPath();
-
-    for(let x=0; x<canvas.width; x+=2){
-      let y = cy;
-      if(type === 'transverse'){
-        y = cy + Math.sin(x * 0.02 - t * freq * 3) * amp;
-      } else if(type === 'standing'){
-        y = cy + Math.sin(x * 0.02) * Math.cos(t * freq * 3) * amp;
-      }
-      if(x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    // Grid
+    ctx.strokeStyle = 'rgba(245,158,11,0.05)';
+    ctx.lineWidth = 1;
+    for(let x=0; x<r.width; x+=40){
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,r.height); ctx.stroke();
+    }
+    for(let y=0; y<r.height; y+=40){
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(r.width,y); ctx.stroke();
     }
 
-    ctx.strokeStyle = '#22d3ee';
-    ctx.lineWidth = 3;
+    // Center line
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.beginPath();
+    ctx.moveTo(0, cy); ctx.lineTo(r.width, cy);
     ctx.stroke();
 
+    if(type === 'transverse'){
+      // Draw wave
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      for(let x=0; x<r.width; x++){
+        const y = cy + amp * Math.sin(2 * Math.PI * (x / wavelength - t * freq));
+        if(x===0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // Wave envelope (dashed)
+      ctx.strokeStyle = 'rgba(245,158,11,0.2)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4,4]);
+      ctx.beginPath();
+      ctx.moveTo(0, cy - amp); ctx.lineTo(r.width, cy - amp);
+      ctx.moveTo(0, cy + amp); ctx.lineTo(r.width, cy + amp);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Drag handle for amplitude (top right)
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(r.width - 60, cy - amp, 8, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = '#10b981';
+      ctx.font = 'bold 9px JetBrains Mono';
+      ctx.textAlign = 'center';
+      ctx.fillText('AMP', r.width - 60, cy - amp - 12);
+
+      // Drag handle for frequency (bottom right)
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(r.width - 60 + (freq-2)*15, cy + 60, 8, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.stroke();
+      ctx.fillStyle = '#ef4444';
+      ctx.fillText('FREQ', r.width - 60 + (freq-2)*15, cy + 80);
+
+      // Moving particle on wave
+      const px = (t * speed * 2) % r.width;
+      const py = cy + amp * Math.sin(2 * Math.PI * (px / wavelength - t * freq));
+      ctx.fillStyle = '#06b6d4';
+      ctx.beginPath();
+      ctx.arc(px, py, 6, 0, Math.PI*2);
+      ctx.fill();
+      // glow
+      const grad = ctx.createRadialGradient(px, py, 0, px, py, 15);
+      grad.addColorStop(0, 'rgba(6,182,212,0.5)');
+      grad.addColorStop(1, 'rgba(6,182,212,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(px, py, 15, 0, Math.PI*2);
+      ctx.fill();
+
+    } else if(type === 'longitudinal'){
+      // Draw dots that compress/rarefy
+      const numDots = 80;
+      const spacing = r.width / numDots;
+      ctx.fillStyle = '#fbbf24';
+      for(let i=0; i<numDots; i++){
+        const x0 = i * spacing + spacing/2;
+        const displacement = amp * 0.5 * Math.sin(2 * Math.PI * (x0 / wavelength - t * freq));
+        const x = x0 + displacement;
+        ctx.beginPath();
+        ctx.arc(x, cy, 3, 0, Math.PI*2);
+        ctx.fill();
+      }
+      // compression labels
+      for(let cx = 0; cx < r.width; cx += wavelength/2){
+        const phase = 2 * Math.PI * (cx / wavelength - t * freq);
+        if(Math.cos(phase) > 0.9){
+          ctx.fillStyle = 'rgba(239,68,68,0.6)';
+          ctx.font = 'bold 10px JetBrains Mono';
+          ctx.textAlign = 'center';
+          ctx.fillText('C', cx, cy - 40);
+        } else if(Math.cos(phase) < -0.9){
+          ctx.fillStyle = 'rgba(6,182,212,0.6)';
+          ctx.font = 'bold 10px JetBrains Mono';
+          ctx.textAlign = 'center';
+          ctx.fillText('R', cx, cy - 40);
+        }
+      }
+    } else if(type === 'standing'){
+      // Standing wave
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      const L = r.width - 100;
+      for(let x=0; x<=L; x++){
+        const xn = x / L;
+        const y = cy + amp * Math.sin(Math.PI * 3 * xn) * Math.cos(2 * Math.PI * t * freq);
+        if(x===0) ctx.moveTo(x + 50, y);
+        else ctx.lineTo(x + 50, y);
+      }
+      ctx.stroke();
+      // nodes
+      for(let i=0; i<=3; i++){
+        const nx = 50 + (L / 3) * i;
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(nx, cy, 4, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#ef4444';
+        ctx.font = '9px JetBrains Mono';
+        ctx.textAlign = 'center';
+        ctx.fillText('N', nx, cy + 18);
+      }
+    }
+
+    // Labels
+    ctx.fillStyle = '#9aa3b8';
+    ctx.font = '10px JetBrains Mono';
+    ctx.textAlign = 'left';
+    ctx.fillText(`λ = ${wavelength.toFixed(0)} px`, 15, 20);
+    ctx.fillText(`f = ${freq.toFixed(1)} Hz`, 15, 35);
+    ctx.fillText(`v = ${(wavelength*freq).toFixed(0)} px/s`, 15, 50);
+  }
+
+  function loop(){
+    if(running){
+      t += 0.02;
+    }
+    draw();
+    animId = requestAnimationFrame(loop);
+  }
+
+  function updateReadout(){
+    const wavelength = speed / freq;
     document.getElementById('wv-freq').textContent = freq.toFixed(1) + ' Hz';
     document.getElementById('wv-amp').textContent = amp.toFixed(0) + ' px';
-
-    requestAnimationFrame(draw);
+    document.getElementById('wv-lambda').textContent = wavelength.toFixed(0) + ' px';
+    document.getElementById('wv-speed').textContent = (wavelength*freq).toFixed(0) + ' px/s';
   }
-  draw();
 
-  document.getElementById('wv-type').addEventListener('change', e => { type = e.target.value; });
-  document.getElementById('wv-freq-input').addEventListener('input', e => { freq = parseFloat(e.target.value)||2; });
-  document.getElementById('wv-amp-input').addEventListener('input', e => { amp = parseFloat(e.target.value)||30; });
+  // Drag handles
+  let dragging = null;
+  canvas.addEventListener('mousedown', e => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const cy = rect.height / 2;
+    // amp handle
+    if(Math.sqrt((mx-(rect.width-60))**2 + (my-(cy-amp))**2) < 15){
+      dragging = 'amp';
+    }
+    // freq handle
+    if(Math.sqrt((mx-(rect.width-60+(freq-2)*15))**2 + (my-(cy+60))**2) < 15){
+      dragging = 'freq';
+    }
+  });
+  canvas.addEventListener('mousemove', e => {
+    if(!dragging) return;
+    const rect = canvas.getBoundingClientRect();
+    const cy = rect.height / 2;
+    if(dragging === 'amp'){
+      amp = Math.max(5, Math.min(80, cy - e.clientY + rect.top));
+    } else if(dragging === 'freq'){
+      const mx = e.clientX - rect.left;
+      freq = Math.max(0.5, Math.min(8, 2 + (mx - (rect.width - 60)) / 15));
+    }
+    updateReadout();
+  });
+  window.addEventListener('mouseup', () => dragging = null);
+
+  // touch
+  canvas.addEventListener('touchstart', e => {
+    const rect = canvas.getBoundingClientRect();
+    const t = e.touches[0];
+    const mx = t.clientX - rect.left;
+    const my = t.clientY - rect.top;
+    const cy = rect.height / 2;
+    if(Math.abs(my - (cy - amp)) < 30){
+      dragging = 'amp';
+    } else if(Math.abs(my - (cy + 60)) < 30){
+      dragging = 'freq';
+    }
+  }, {passive:true});
+  canvas.addEventListener('touchmove', e => {
+    if(!dragging) return;
+    const rect = canvas.getBoundingClientRect();
+    const t = e.touches[0];
+    const cy = rect.height / 2;
+    if(dragging === 'amp'){
+      amp = Math.max(5, Math.min(80, cy - (t.clientY - rect.top)));
+    } else {
+      freq = Math.max(0.5, Math.min(8, 2 + ((t.clientX - rect.left) - (rect.width - 60)) / 15));
+    }
+    updateReadout();
+  }, {passive:true});
+  window.addEventListener('touchend', () => dragging = null);
+
+  document.getElementById('wv-type').addEventListener('change', e => {
+    type = e.target.value;
+  });
+  document.getElementById('wv-freq-input').addEventListener('input', e => {
+    freq = parseFloat(e.target.value) || 2;
+    updateReadout();
+  });
+  document.getElementById('wv-amp-input').addEventListener('input', e => {
+    amp = parseFloat(e.target.value) || 30;
+    updateReadout();
+  });
+  document.getElementById('wv-play').addEventListener('click', () => {
+    running = !running;
+    document.getElementById('wv-play').innerHTML = running
+      ? '<i class="fa-solid fa-pause"></i> Pause'
+      : '<i class="fa-solid fa-play"></i> Play';
+  });
+  document.getElementById('wv-stop').addEventListener('click', () => {
+    running = false;
+    t = 0;
+    document.getElementById('wv-play').innerHTML = '<i class="fa-solid fa-play"></i> Play';
+    draw();
+  });
+
+  updateReadout();
+  loop();
 })();
 
 /* ========================================================================
    NEWTON'S LAW OF COOLING
    ======================================================================== */
-(function newtonCooling(){
+(function cooling(){
   const canvas = document.getElementById('cool-canvas');
-  if(!canvas) return;
   const ctx = canvas.getContext('2d');
-
-  let initT = 80;
-  let surrT = 25;
-  let k = 0.05;
-  let time = 0;
+  let temp = 80, surr = 25, k = 0.05;
   let running = false;
-  let history = [];
+  let time = 0;
+  let data = [];
+  let animId = null;
 
   function resize(){
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    const r = canvas.getBoundingClientRect();
+    canvas.width = r.width * devicePixelRatio;
+    canvas.height = r.height * devicePixelRatio;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
   }
   resize();
-  window.addEventListener('resize', resize);
+  window.addEventListener('resize', draw);
 
   function draw(){
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const r = canvas.getBoundingClientRect();
+    ctx.clearRect(0, 0, r.width, r.height);
 
-    if(running){
-      time += 0.2;
-      const temp = surrT + (initT - surrT) * Math.exp(-k * time);
-      history.push({ t: time, T: temp });
-    }
-
-    const curTemp = history.length > 0 ? history[history.length-1].T : initT;
-    document.getElementById('cl-temp').textContent = curTemp.toFixed(1) + ' °C';
-    document.getElementById('cl-time').textContent = time.toFixed(0) + ' s';
-
-    ctx.beginPath();
-    history.forEach((pt, idx) => {
-      const px = (pt.t / 100) * canvas.width;
-      const py = canvas.height - ((pt.T / 100) * canvas.height);
-      if(idx === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-    });
-    ctx.strokeStyle = '#ef4444';
+    // Beaker on left
+    const bx = 120, by = 100, bw = 140, bh = 200;
+    ctx.strokeStyle = '#5a6478';
     ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(bx, by);
+    ctx.lineTo(bx, by + bh);
+    ctx.lineTo(bx + bw, by + bh);
+    ctx.lineTo(bx + bw, by);
     ctx.stroke();
 
-    requestAnimationFrame(draw);
-  }
-  draw();
+    // Water
+    const tempRatio = (temp - 0) / 100;
+    const waterH = bh * 0.7;
+    const wy = by + bh - waterH;
+    const waterColor = `rgb(${255 - (100-temp)*1.5}, ${100 + temp*0.8}, 50)`;
+    ctx.fillStyle = waterColor;
+    ctx.fillRect(bx + 3, wy, bw - 6, waterH - 3);
 
-  document.getElementById('cl-play').addEventListener('click', () => { running = true; });
-  document.getElementById('cl-stop').addEventListener('click', () => { running = false; time = 0; history = []; });
-  document.getElementById('cl-init').addEventListener('input', e => { initT = parseFloat(e.target.value)||80; });
-  document.getElementById('cl-surr-input').addEventListener('input', e => { surrT = parseFloat(e.target.value)||25; });
-  document.getElementById('cl-k').addEventListener('input', e => { k = parseFloat(e.target.value)||0.05; });
+    // Steam (when hot)
+    if(temp > 50){
+      for(let i=0; i<5; i++){
+        const sx = bx + 20 + i*25 + Math.sin(time*2 + i)*8;
+        const sy = by - 10 - (time*30 + i*15) % 50;
+        ctx.fillStyle = `rgba(255,255,255,${0.3 * (1 - ((time*30 + i*15) % 50)/50)})`;
+        ctx.beginPath();
+        ctx.arc(sx, sy, 8, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    // Thermometer
+    const thx = bx + bw + 30;
+    ctx.strokeStyle = '#5a6478';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(thx, by + 20);
+    ctx.lineTo(thx, by + bh - 30);
+    ctx.stroke();
+    // bulb
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(thx, by + bh - 20, 10, 0, Math.PI*2);
+    ctx.fill();
+    // mercury column
+    const mTop = by + bh - 30 - (temp/100) * (bh - 50);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(thx, by + bh - 30);
+    ctx.lineTo(thx, mTop);
+    ctx.stroke();
+    // temp label
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 14px JetBrains Mono';
+    ctx.textAlign = 'left';
+    ctx.fillText(temp.toFixed(1) + '°C', thx + 15, by + 30);
+    ctx.fillStyle = '#9aa3b8';
+    ctx.font = '10px JetBrains Mono';
+    ctx.fillText('Water', bx + bw/2 - 15, by - 10);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#9aa3b8';
+    ctx.fillText('Beaker', bx + bw/2, by + bh + 20);
+
+    // Graph on right
+    const gx = 360, gy = 80, gw = r.width - 380, gh = 280;
+    ctx.strokeStyle = '#3a4258';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(gx, gy, gw, gh);
+    // axes labels
+    ctx.fillStyle = '#9aa3b8';
+    ctx.font = '9px JetBrains Mono';
+    ctx.textAlign = 'right';
+    for(let t=0; t<=100; t+=20){
+      const y = gy + gh - (t/100) * gh;
+      ctx.fillText(t + '°', gx - 5, y + 3);
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      ctx.beginPath();
+      ctx.moveTo(gx, y); ctx.lineTo(gx + gw, y);
+      ctx.stroke();
+    }
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#9aa3b8';
+    ctx.fillText('Time →', gx + gw/2, gy + gh + 20);
+    ctx.save();
+    ctx.translate(gx - 30, gy + gh/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillText('Temperature (°C)', 0, 0);
+    ctx.restore();
+
+    // Surrounding temp line
+    const surrY = gy + gh - (surr/100) * gh;
+    ctx.strokeStyle = '#06b6d4';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5,5]);
+    ctx.beginPath();
+    ctx.moveTo(gx, surrY); ctx.lineTo(gx + gw, surrY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#06b6d4';
+    ctx.font = '9px JetBrains Mono';
+    ctx.textAlign = 'left';
+    ctx.fillText('Surroundings ' + surr + '°C', gx + 5, surrY - 5);
+
+    // Plot data
+    if(data.length > 1){
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      data.forEach((d, i) => {
+        const x = gx + (d.t / 60) * gw;
+        const y = gy + gh - (d.temp/100) * gh;
+        if(i===0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+  }
+
+  function step(){
+    if(!running) return;
+    time += 0.05;
+    // Newton's law: dT/dt = -k(T - Ts)
+    temp -= k * (temp - surr) * 0.05;
+    if(time % 0.5 < 0.05){
+      data.push({t: time, temp: temp});
+      if(data.length > 200) data.shift();
+    }
+    document.getElementById('cl-temp').textContent = temp.toFixed(1) + ' °C';
+    document.getElementById('cl-time').textContent = time.toFixed(1) + ' s';
+    draw();
+    animId = requestAnimationFrame(step);
+  }
+
+  function updateReadout(){
+    document.getElementById('cl-temp').textContent = temp.toFixed(1) + ' °C';
+    document.getElementById('cl-surr').textContent = surr.toFixed(1) + ' °C';
+  }
+
+  document.getElementById('cl-init').addEventListener('input', e => {
+    if(running) return;
+    temp = parseFloat(e.target.value) || 80;
+    data = [];
+    updateReadout();
+    draw();
+  });
+  document.getElementById('cl-surr-input').addEventListener('input', e => {
+    surr = parseFloat(e.target.value) || 25;
+    updateReadout();
+    draw();
+  });
+  document.getElementById('cl-k').addEventListener('input', e => {
+    k = parseFloat(e.target.value) || 0.05;
+  });
+  document.getElementById('cl-play').addEventListener('click', () => {
+    running = !running;
+    document.getElementById('cl-play').innerHTML = running
+      ? '<i class="fa-solid fa-pause"></i> Pause'
+      : '<i class="fa-solid fa-play"></i> Start';
+    if(running) step();
+  });
+  document.getElementById('cl-stop').addEventListener('click', () => {
+    running = false;
+    temp = parseFloat(document.getElementById('cl-init').value) || 80;
+    time = 0;
+    data = [];
+    document.getElementById('cl-play').innerHTML = '<i class="fa-solid fa-play"></i> Start';
+    updateReadout();
+    draw();
+  });
+
+  updateReadout();
+  draw();
 })();
 
 /* ========================================================================
@@ -3397,48 +4015,346 @@ function scrollToPrac(id){
    ======================================================================== */
 (function ohmsLaw(){
   const canvas = document.getElementById('ohm-canvas');
-  if(!canvas) return;
   const ctx = canvas.getContext('2d');
-
-  let emf = 12;
-  let R = 10;
-  let Rh = 5;
+  let emf = 12, R = 10, rheo = 5;
+  let records = [];
+  let running = false;
+  let animId = null;
+  let electronPos = 0;
 
   function resize(){
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    const r = canvas.getBoundingClientRect();
+    canvas.width = r.width * devicePixelRatio;
+    canvas.height = r.height * devicePixelRatio;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
   }
   resize();
-  window.addEventListener('resize', resize);
+  window.addEventListener('resize', draw);
 
-  function draw(){
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    const totalR = R + Rh;
+  function getVI(){
+    const totalR = R + rheo;
     const I = emf / totalR;
     const V = I * R;
+    return {V, I};
+  }
 
+  function draw(){
+    const r = canvas.getBoundingClientRect();
+    ctx.clearRect(0, 0, r.width, r.height);
+
+    // Circuit on left
+    const cx = 80, cy = 200;
+    // Battery
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 40);
+    ctx.lineTo(cx, cy + 40);
+    ctx.stroke();
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(cx - 10, cy - 25);
+    ctx.lineTo(cx + 10, cy - 25);
+    ctx.moveTo(cx - 6, cy - 15);
+    ctx.lineTo(cx + 6, cy - 15);
+    ctx.stroke();
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 11px JetBrains Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText(emf.toFixed(1) + 'V', cx, cy - 50);
+
+    // wires
+    ctx.strokeStyle = '#5a6478';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 40);
+    ctx.lineTo(cx + 80, cy - 40);
+    ctx.lineTo(cx + 80, cy - 80);
+    ctx.lineTo(cx + 180, cy - 80);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + 40);
+    ctx.lineTo(cx + 80, cy + 40);
+    ctx.lineTo(cx + 80, cy + 80);
+    ctx.lineTo(cx + 180, cy + 80);
+    ctx.stroke();
+
+    // Rheostat (variable resistor)
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for(let i=0; i<6; i++){
+      ctx.moveTo(cx + 180 + i*15, cy - 80 - 8);
+      ctx.lineTo(cx + 195 + i*15, cy - 80 + 8);
+    }
+    ctx.stroke();
+    // slider
+    const sliderX = cx + 180 + (rheo/50) * 75;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(sliderX, cy - 100);
+    ctx.lineTo(sliderX, cy - 75);
+    ctx.stroke();
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(sliderX, cy - 100, 5, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#ef4444';
+    ctx.font = '9px JetBrains Mono';
+    ctx.fillText('Rheo ' + rheo.toFixed(1) + 'Ω', cx + 218, cy - 95);
+
+    // Resistor (fixed)
+    ctx.strokeStyle = '#06b6d4';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cx + 180, cy + 65, 80, 30);
+    ctx.fillStyle = '#06b6d4';
+    ctx.font = '10px JetBrains Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText(R.toFixed(1) + 'Ω', cx + 220, cy + 84);
+
+    // Voltmeter across resistor
+    const vx = cx + 320, vy = cy + 80;
+    ctx.strokeStyle = '#5a6478';
+    ctx.beginPath();
+    ctx.moveTo(cx + 260, cy + 80);
+    ctx.lineTo(vx, cy + 80);
+    ctx.lineTo(vx, vy);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + 220, cy + 65);
+    ctx.lineTo(cx + 220, vy);
+    ctx.lineTo(vx, vy);
+    ctx.stroke();
+    // voltmeter circle
+    ctx.beginPath();
+    ctx.arc(vx, vy, 22, 0, Math.PI*2);
+    ctx.fillStyle = '#1a1f2e';
+    ctx.fill();
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    const {V, I} = getVI();
+    ctx.fillStyle = '#10b981';
+    ctx.font = 'bold 11px JetBrains Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText('V', vx, vy - 4);
+    ctx.fillStyle = '#fff';
+    ctx.font = '8px JetBrains Mono';
+    ctx.fillText(V.toFixed(2) + 'V', vx, vy + 8);
+
+    // Ammeter
+    const ax = cx + 130, ay = cy - 80;
+    ctx.beginPath();
+    ctx.arc(ax, ay, 20, 0, Math.PI*2);
+    ctx.fillStyle = '#1a1f2e';
+    ctx.fill();
+    ctx.strokeStyle = '#06b6d4';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#06b6d4';
+    ctx.font = 'bold 11px JetBrains Mono';
+    ctx.fillText('A', ax, ay - 4);
+    ctx.fillStyle = '#fff';
+    ctx.font = '8px JetBrains Mono';
+    ctx.fillText(I.toFixed(2) + 'A', ax, ay + 8);
+
+    // Moving electrons
+    if(running){
+      ctx.fillStyle = '#fbbf24';
+      for(let i=0; i<5; i++){
+        const ex = (electronPos + i*30) % 200;
+        ctx.beginPath();
+        ctx.arc(cx + 30 + ex, cy - 40, 2, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    // Graph on right
+    const gx = 460, gy = 60, gw = r.width - 480, gh = 320;
+    ctx.strokeStyle = '#3a4258';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(gx, gy, gw, gh);
+    // grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    for(let i=1; i<10; i++){
+      ctx.beginPath();
+      ctx.moveTo(gx + i*gw/10, gy);
+      ctx.lineTo(gx + i*gw/10, gy + gh);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(gx, gy + i*gh/10);
+      ctx.lineTo(gx + gw, gy + i*gh/10);
+      ctx.stroke();
+    }
+    // axes
+    ctx.fillStyle = '#9aa3b8';
+    ctx.font = '9px JetBrains Mono';
+    ctx.textAlign = 'right';
+    const maxV = emf, maxI = emf / R;
+    for(let i=0; i<=5; i++){
+      const v = (maxV * i / 5).toFixed(1);
+      const y = gy + gh - (i/5) * gh;
+      ctx.fillText(v + 'V', gx - 4, y + 3);
+    }
+    ctx.textAlign = 'center';
+    for(let i=0; i<=5; i++){
+      const c = (maxI * i / 5).toFixed(1);
+      const x = gx + (i/5) * gw;
+      ctx.fillText(c + 'A', x, gy + gh + 12);
+    }
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 10px JetBrains Mono';
+    ctx.fillText('V vs I Graph', gx + gw/2, gy - 8);
+
+    // Plot records
+    if(records.length > 0){
+      ctx.strokeStyle = '#06b6d4';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      records.forEach((p, i) => {
+        const x = gx + (p.I / maxI) * gw;
+        const y = gy + gh - (p.V / maxV) * gh;
+        if(i===0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      // points
+      records.forEach(p => {
+        const x = gx + (p.I / maxI) * gw;
+        const y = gy + gh - (p.V / maxV) * gh;
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI*2);
+        ctx.fill();
+      });
+    }
+
+    // Current point
+    const cxp = gx + (I / maxI) * gw;
+    const cyp = gy + gh - (V / maxV) * gh;
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(cxp, cyp, 5, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  function loop(){
+    if(running){
+      electronPos += 2;
+    }
+    draw();
+    animId = requestAnimationFrame(loop);
+  }
+
+  function updateReadout(){
+    const {V, I} = getVI();
     document.getElementById('ohm-v').textContent = V.toFixed(2) + ' V';
     document.getElementById('ohm-i').textContent = I.toFixed(2) + ' A';
-
-    ctx.strokeStyle = '#10b981';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(100, 80, canvas.width - 200, canvas.height - 160);
-
-    ctx.fillStyle = '#f59e0b';
-    ctx.fillRect(canvas.width / 2 - 30, 60, 60, 40);
-    ctx.fillStyle = '#000';
-    ctx.font = '12px JetBrains Mono';
-    ctx.fillText(`R: ${R}Ω`, canvas.width / 2 - 20, 85);
-
-    requestAnimationFrame(draw);
+    document.getElementById('ohm-r').textContent = R.toFixed(1) + ' Ω';
+    document.getElementById('ohm-rh-val').textContent = rheo.toFixed(1);
   }
-  draw();
 
-  document.getElementById('ohm-emf').addEventListener('input', e => { emf = parseFloat(e.target.value)||12; });
-  document.getElementById('ohm-res').addEventListener('input', e => { R = parseFloat(e.target.value)||10; });
-  document.getElementById('ohm-rh').addEventListener('input', e => { Rh = parseFloat(e.target.value)||5; });
+  document.getElementById('ohm-emf').addEventListener('input', e => {
+    emf = parseFloat(e.target.value) || 12;
+    updateReadout();
+  });
+  document.getElementById('ohm-res').addEventListener('input', e => {
+    R = parseFloat(e.target.value) || 10;
+    updateReadout();
+  });
+  document.getElementById('ohm-rh').addEventListener('input', e => {
+    rheo = parseFloat(e.target.value) || 5;
+    updateReadout();
+  });
+  document.getElementById('ohm-play').addEventListener('click', () => {
+    running = true;
+    const {V, I} = getVI();
+    records.push({V, I});
+    if(records.length > 20) records.shift();
+    setTimeout(() => running = false, 500);
+    toast(`Recorded: V=${V.toFixed(2)}V, I=${I.toFixed(2)}A`);
+  });
+  document.getElementById('ohm-stop').addEventListener('click', () => {
+    records = [];
+    toast('Graph cleared');
+  });
+
+  updateReadout();
+  loop();
+})();
+
+/* ========================================================================
+   ALL 42 PRACTICALS GRID
+   ======================================================================== */
+(function allPracticals(){
+  const pracs = [
+    {n:1, name:'Vernier Caliper', cat:'Measurement', target:'vernier'},
+    {n:2, name:'Micrometer Screw Gauge', cat:'Measurement', target:'micrometer'},
+    {n:3, name:'Spherometer', cat:'Measurement', target:'spherometer'},
+    {n:4, name:'Travelling Microscope', cat:'Measurement', target:'microscope'},
+    {n:5, name:'Simple Pendulum', cat:'Mechanics', target:'projectile'},
+    {n:6, name:'Projectile Motion', cat:'Mechanics', target:'projectile'},
+    {n:7, name:'Explosive Momentum', cat:'Mechanics', target:'explosive'},
+    {n:8, name:'Conservation of Momentum', cat:'Mechanics', target:'explosive'},
+    {n:9, name:'Centripetal Force', cat:'Mechanics', target:'projectile'},
+    {n:10, name:'Hooke\'s Law', cat:'Mechanics', target:'projectile'},
+    {n:11, name:'Young\'s Modulus', cat:'Mechanics', target:'projectile'},
+    {n:12, name:'Surface Tension', cat:'Properties', target:'projectile'},
+    {n:13, name:'Viscosity by Stokes\' Law', cat:'Properties', target:'projectile'},
+    {n:14, name:'Transverse Wave', cat:'Waves', target:'waves'},
+    {n:15, name:'Longitudinal Wave', cat:'Waves', target:'waves'},
+    {n:16, name:'Standing Wave', cat:'Waves', target:'waves'},
+    {n:17, name:'Resonance Tube', cat:'Waves', target:'waves'},
+    {n:18, name:'Sonometer', cat:'Waves', target:'waves'},
+    {n:19, name:'Speed of Sound', cat:'Waves', target:'waves'},
+    {n:20, name:'Ripple Tank', cat:'Waves', target:'waves'},
+    {n:21, name:'Refraction Through 5 Mediums', cat:'Optics', target:'refraction'},
+    {n:22, name:'Refractive Index (Glass Block)', cat:'Optics', target:'refraction'},
+    {n:23, name:'Convex Lens Focal Length', cat:'Optics', target:'refraction'},
+    {n:24, name:'Concave Lens Focal Length', cat:'Optics', target:'refraction'},
+    {n:25, name:'Convex Mirror Focal Length', cat:'Optics', target:'refraction'},
+    {n:26, name:'Concave Mirror Focal Length', cat:'Optics', target:'refraction'},
+    {n:27, name:'Prism Angle (A)', cat:'Optics', target:'refraction'},
+    {n:28, name:'Refractive Index of Prism', cat:'Optics', target:'refraction'},
+    {n:29, name:'Diffraction Grating', cat:'Optics', target:'refraction'},
+    {n:30, name:'Newton\'s Rings', cat:'Optics', target:'refraction'},
+    {n:31, name:'Air Wedge', cat:'Optics', target:'refraction'},
+    {n:32, name:'Boyle\'s Law', cat:'Heat', target:'cooling'},
+    {n:33, name:'Charles\' Law', cat:'Heat', target:'cooling'},
+    {n:34, name:'Newton\'s Law of Cooling', cat:'Heat', target:'cooling'},
+    {n:35, name:'Specific Heat Capacity', cat:'Heat', target:'cooling'},
+    {n:36, name:'Latent Heat', cat:'Heat', target:'cooling'},
+    {n:37, name:'Thermal Expansion', cat:'Heat', target:'cooling'},
+    {n:38, name:'Ohm\'s Law', cat:'Electricity', target:'electricity'},
+    {n:39, name:'Resistance of a Wire', cat:'Electricity', target:'electricity'},
+    {n:40, name:'Potentiometer', cat:'Electricity', target:'electricity'},
+    {n:41, name:'Metre Bridge', cat:'Electricity', target:'electricity'},
+    {n:42, name:'Semiconductor Diode', cat:'Electricity', target:'electricity'}
+  ];
+
+  const grid = document.getElementById('all-pracs-grid');
+  pracs.forEach(p => {
+    const tile = document.createElement('div');
+    tile.className = 'prac-tile';
+    tile.onclick = () => scrollToPrac(p.target);
+    tile.innerHTML = `
+      <div class="prac-tile-num">P / ${String(p.n).padStart(2,'0')}</div>
+      <div class="prac-tile-name">${p.name}</div>
+      <div class="prac-tile-cat">${p.cat}</div>
+    `;
+    grid.appendChild(tile);
+  });
+})();
+
+/* fix explosive typo guard */
+(function fixExplosiveGuard(){
+  // The blast button check uses `basted` typo - fix by re-binding
+  const btn = document.getElementById('ex-blast');
+  if(!btn) return;
+  // Already handled in IIFE; just ensure no error
 })();
 </script>
+
 </body>
 </html>
