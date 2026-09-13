@@ -1,0 +1,6 @@
+{
+  "name": "A/L Physics Real-Time Simulations",
+  "description": "Interactive real-time physics laboratory simulations with mouse controls, glassmorphic UI, parallax scrolling, and AI lab assistant covering all 42 syllabus practicals.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
